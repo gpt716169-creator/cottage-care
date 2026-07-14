@@ -150,6 +150,12 @@ async function fetchCottages() {
     renderCottages();
     updateDashboardStats();
     updateMapStatus();
+    
+    // Если мы на вкладке администрирования, перерисовываем нужную таблицу
+    if (state.currentTab === 'admin') {
+      if (state.adminSubtab === 'plan') renderPlanAdmin();
+      if (state.adminSubtab === 'cottages') renderCottagesAdmin();
+    }
   } catch (e) {
     console.error('Error fetching cottages:', e);
   }
