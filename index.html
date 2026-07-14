@@ -589,6 +589,9 @@
                     <button class="pb-sm font-semibold text-sm transition-colors text-on-surface-variant hover:text-on-surface" id="admin-subtab-cottages" onclick="switchAdminSubtab('cottages')">
                         Редактор домиков
                     </button>
+                    <button class="pb-sm font-semibold text-sm transition-colors text-on-surface-variant hover:text-on-surface" id="admin-subtab-profile" onclick="switchAdminSubtab('profile')">
+                        Мой профиль
+                    </button>
                 </div>
 
                 <!-- Admin Subtab: Plan -->
@@ -724,6 +727,26 @@
                                 </table>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Admin Subtab: Profile -->
+                <div id="admin-content-profile" class="hidden space-y-md">
+                    <div class="bg-white p-lg rounded-xl border border-outline-variant/10 shadow-sm max-w-md">
+                        <h3 class="font-bold text-primary text-lg mb-md">Настройки профиля супервайзера</h3>
+                        <form id="profile-settings-form" onsubmit="saveSupervisorProfile(event)" class="space-y-md">
+                            <div>
+                                <label class="block text-xs font-semibold text-on-surface-variant mb-xs">Ваше имя (Супервайзер)</label>
+                                <input id="settings-user-name" type="text" required placeholder="Анна Ковалева" class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-md py-2 text-sm focus:outline-none"/>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-on-surface-variant mb-xs">Ссылка на аватар (URL-фото)</label>
+                                <input id="settings-user-avatar" type="text" placeholder="https://images.unsplash.com/photo-..." class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-md py-2 text-sm focus:outline-none"/>
+                            </div>
+                            <button type="submit" class="w-full h-10 bg-primary text-white rounded-xl font-bold active:scale-95 transition-all text-xs">
+                                Сохранить профиль
+                            </button>
+                        </form>
                     </div>
                 </div>
             </section>

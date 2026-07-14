@@ -218,6 +218,10 @@ function toggleUserRole() {
 function updateRoleUI() {
   const isSupervisor = state.currentRole === 'supervisor';
   
+  // Достаем имя супервайзера из локального хранилища или ставим дефолтное
+  const superName = localStorage.getItem('cottage_care_supervisor_name') || 'Анна Ковалева';
+  const superAvatar = localStorage.getItem('cottage_care_supervisor_avatar') || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=150';
+
   // Текст в шапке
   const headerRole = document.getElementById('header-role-name');
   if (headerRole) headerRole.innerText = isSupervisor ? 'Супервайзер' : 'Горничная';
@@ -227,13 +231,22 @@ function updateRoleUI() {
   if (userBadge) userBadge.innerText = isSupervisor ? 'Супервайзер' : 'Служба уборки';
   
   const userName = document.getElementById('user-name');
-  if (userName) userName.innerText = isSupervisor ? 'Анна Ковалева' : 'Горничная';
+  if (userName) userName.innerText = isSupervisor ? superName : 'Горничная';
   
   const userAvatar = document.getElementById('user-avatar');
   if (userAvatar) {
     userAvatar.src = isSupervisor 
-      ? 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=150'
+      ? superAvatar
       : 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150';
+  }
+
+  // Заполняем поля ввода в настройках профиля супервайзера
+  if (isSupervisor) {
+    const settingsName = document.getElementById('settings-user-name');
+    if (settingsName) settingsName.value = superName;
+
+    const settingsAvatar = document.getElementById('settings-user-avatar');
+    if (settingsAvatar) settingsAvatar.value = superAvatar;
   }
 
   // Показ/скрытие блоков для ролей
@@ -1388,7 +1401,7 @@ function switchAdminSubtab(subtabId) {
   state.adminSubtab = subtabId;
 
   // Кнопки
-  const subtabs = ['plan', 'maids', 'cottages'];
+  const subtabs = ['plan', 'maids', 'cottages', 'profile'];
   subtabs.forEach(tab => {
     const btn = document.getElementById(`admin-subtab-${tab}`);
     const content = document.getElementById(`admin-content-${tab}`);
@@ -1645,4 +1658,21 @@ async function deleteCottage(number) {
   } catch (e) {
     console.error('Error deleting cottage:', e);
   }
+}
+
+// Сохранение профиля супервайзера
+function saveSupervisorProfile(event) {
+  event.preventDefault();
+  const name = document.getElementById('settings-user-name').value.trim();
+  const avatar = document.getElementById('settings-user-avatar').value.trim();
+
+  localStorage.setItem('cottage_care_supervisor_name', name);
+  localStorage.setItem('cottage_care_supervisor_avatar', avatar);
+
+  updateRoleUI();
+  
+  if (tg) {
+    tg.HapticFeedback.notificationOccurred('success');
+  }
+  alert('Профиль супервайзера успешно обновлен!');
 }
