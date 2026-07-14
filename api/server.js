@@ -40,14 +40,12 @@ function saveSubscribers() {
   }
 }
 
-// Инициализация базы данных и запуск сервера
-async function startServer() {
-  try {
-    await initDb();
-    console.log('Database initialized successfully.');
-  } catch (e) {
-    console.error('Database initialization failed:', e);
-  }
+// Инициализация базы данных в фоновом режиме (запросы подождут её благодаря await initDb() в db.js)
+initDb().then(() => {
+  console.log('Database initialized successfully.');
+}).catch(e => {
+  console.error('Database initialization failed:', e);
+});
 
   // Настройка Telegram-бота
   if (botToken) {
@@ -653,12 +651,11 @@ async function startServer() {
     });
   });
 
-  // Запуск прослушивания порта (только локально)
-  if (!process.env.VERCEL) {
-    app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
-    });
-  }
+// Запуск прослушивания порта (только локально)
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
 }
 
 // Рассылка уведомлений подписчикам в Telegram
@@ -678,6 +675,5 @@ function sendTelegramNotification(message) {
 }
 
 // Экспорт по умолчанию для Vercel Serverless
-startServer();
 
 export default app;
