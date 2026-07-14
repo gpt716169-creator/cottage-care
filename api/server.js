@@ -5,7 +5,7 @@ import { HttpsProxyAgent } from 'https-proxy-agent';
 import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
-import { initDb, query, queryOne, run } from './db.js';
+import { initDb, query, queryOne, run, dbType, lastDbError } from './db.js';
 
 dotenv.config();
 
@@ -640,10 +640,25 @@ async function startServer() {
     }
   });
 
-  // Запуск прослушивания порта
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+  // Эндпоинт для отладки базы данных на Vercel
+  app.get('/api/debug-db', (req, res) => {
+    const dbUrl = process.env.DATABASE_URL || '';
+    const domain = dbUrl ? dbUrl.split('@')[1]?.split(':')[0] : 'not-set';
+    res.json({
+      dbType,
+      isProduction: !!process.env.DATABASE_URL,
+      hasDatabaseUrl: !!dbUrl,
+      databaseUrlDomain: domain,
+      lastDbError
+    });
   });
+
+  // Запуск прослушивания порта (только локально)
+  if (!process.env.VERCEL) {
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  }
 }
 
 // Рассылка уведомлений подписчикам в Telegram

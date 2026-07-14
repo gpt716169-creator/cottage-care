@@ -8,7 +8,8 @@ dotenv.config();
 
 const isProduction = !!process.env.DATABASE_URL;
 let dbInstance = null;
-let dbType = 'sqlite';
+export let dbType = 'sqlite';
+export let lastDbError = null;
 let initPromise = null;
 
 // Функция форматирования запросов (замена ? на $1, $2 для PostgreSQL)
@@ -39,6 +40,7 @@ export async function initDb() {
         dbInstance = pool;
         console.log('PostgreSQL connection established successfully.');
       } catch (e) {
+        lastDbError = e.message;
         console.warn('PostgreSQL connection failed. Falling back to SQLite local database. Error:', e.message);
         dbType = 'sqlite';
       }
