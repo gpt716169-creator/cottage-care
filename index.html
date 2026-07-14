@@ -802,30 +802,30 @@
 
     <!-- Bottom Navigation Bar (Mobile Only) -->
     <nav class="md:hidden fixed bottom-0 left-0 w-full z-50 h-16 bg-white border-t border-outline-variant/10 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] flex justify-around items-center w-full pb-safe">
-        <button onclick="switchTab('cleaning')" data-mobile-tab="cleaning" id="mob-nav-cleaning" class="flex flex-col items-center justify-center text-primary px-3 py-1">
+        <button onclick="switchTab('cleaning')" id="mob-nav-cleaning" class="mobile-nav-btn active">
             <span class="material-symbols-outlined">cleaning_services</span>
-            <span class="text-[10px] font-semibold">Уборки</span>
+            <span>Уборки</span>
         </button>
-        <button onclick="switchTab('laundry')" data-mobile-tab="laundry" id="mob-nav-laundry" class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all px-3 py-1">
+        <button onclick="switchTab('laundry')" id="mob-nav-laundry" class="mobile-nav-btn">
             <span class="material-symbols-outlined">local_laundry_service</span>
-            <span class="text-[10px] font-semibold">Белье</span>
+            <span>Белье</span>
         </button>
-        <button onclick="switchTab('requests')" data-mobile-tab="requests" id="mob-nav-requests" class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all px-3 py-1 relative">
+        <button onclick="switchTab('requests')" id="mob-nav-requests" class="mobile-nav-btn">
             <span class="material-symbols-outlined">priority_high</span>
-            <span class="text-[10px] font-semibold">Заявки</span>
-            <span id="requests-badge-bubble" class="hidden absolute top-0.5 right-3 w-4 h-4 bg-error text-white text-[9px] rounded-full flex items-center justify-center font-bold">0</span>
+            <span>Заявки</span>
+            <span id="requests-badge-bubble" class="hidden absolute top-1 right-5 w-4 h-4 bg-error text-white text-[9px] rounded-full flex items-center justify-center font-bold">0</span>
         </button>
-        <button onclick="switchTab('reports')" data-mobile-tab="reports" id="mob-nav-reports" class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all px-3 py-1">
+        <button onclick="switchTab('reports')" id="mob-nav-reports" class="mobile-nav-btn">
             <span class="material-symbols-outlined">assessment</span>
-            <span class="text-[10px] font-semibold">Отчеты</span>
+            <span>Отчеты</span>
         </button>
-        <button onclick="switchTab('map')" data-mobile-tab="map" id="mob-nav-map" class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all px-3 py-1">
+        <button onclick="switchTab('map')" id="mob-nav-map" class="mobile-nav-btn">
             <span class="material-symbols-outlined">map</span>
-            <span class="text-[10px] font-semibold">Карта</span>
+            <span>Карта</span>
         </button>
-        <button onclick="switchTab('admin')" data-mobile-tab="admin" id="mob-nav-admin" class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all px-3 py-1">
+        <button onclick="switchTab('admin')" id="mob-nav-admin" class="mobile-nav-btn">
             <span class="material-symbols-outlined">settings</span>
-            <span class="text-[10px] font-semibold">Админ</span>
+            <span>Админ</span>
         </button>
     </nav>
 

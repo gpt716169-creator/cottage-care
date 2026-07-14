@@ -114,11 +114,9 @@ function switchTab(tabId) {
     const btnTab = match[1];
     
     if (btnTab === tabId) {
-      btn.classList.add('tab-active-mobile');
-      btn.classList.remove('text-on-surface-variant');
+      btn.classList.add('active');
     } else {
-      btn.classList.remove('tab-active-mobile');
-      btn.classList.add('text-on-surface-variant');
+      btn.classList.remove('active');
     }
   });
 
@@ -1312,9 +1310,9 @@ function openMaidModal(cottage) {
     const id = `maid-chk-${index}`;
     
     const div = document.createElement('div');
-    div.className = 'flex items-center gap-md p-sm border rounded-lg bg-surface-container-low cursor-pointer hover:bg-slate-50 transition-colors';
+    div.className = 'checklist-item flex items-center gap-md p-md border rounded-xl bg-surface-container-low cursor-pointer hover:bg-slate-50 transition-all select-none';
     div.onclick = (e) => {
-      if (e.target.tagName !== 'INPUT') {
+      if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'LABEL') {
         const checkbox = document.getElementById(id);
         checkbox.checked = !checkbox.checked;
         checkbox.dispatchEvent(new Event('change'));
