@@ -1,0 +1,98 @@
+/* Custom Styles for Cottage Care App */
+
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    vertical-align: middle;
+}
+
+body {
+    background-color: #f9f9f7;
+    color: #1a1c1b;
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Glassmorphism card effect */
+.glass-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(50, 78, 88, 0.08);
+}
+
+/* Color status classes for cottage cards */
+.status-white {
+    border-left-color: #c2c7ca !important;
+}
+.status-yellow {
+    border-left-color: #fbbf24 !important;
+}
+.status-orange {
+    border-left-color: #f97316 !important;
+}
+.status-green {
+    border-left-color: #22c55e !important;
+}
+
+/* Tab active classes */
+.tab-active-desktop {
+    background-color: #324e58 !important;
+    color: #ffffff !important;
+}
+
+.tab-active-mobile {
+    color: #324e58 !important;
+    border-radius: 9999px;
+    background-color: #c9e8cb !important;
+}
+
+/* Micro-animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.2s ease-out forwards;
+}
+
+.animate-spin-slow {
+    animation: spin 8s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.animate-pulse-slow {
+    animation: pulseSlow 3s infinite;
+}
+
+@keyframes pulseSlow {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.85; }
+}
+
+/* Hide scrollbar but keep functionality */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+/* Custom styling for inputs */
+input[type="checkbox"]:checked {
+    background-color: #324e58;
+}
+input[type="checkbox"]:focus {
+    ring-color: rgba(50, 78, 88, 0.2);
+}

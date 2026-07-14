@@ -1,0 +1,20 @@
+{
+  "name": "cottage-care",
+  "version": "1.0.0",
+  "description": "Cottage Cleaning and Supervisor Management Telegram Mini App",
+  "main": "api/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node api/server.js",
+    "dev": "node api/server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "https-proxy-agent": "^7.0.4",
+    "pg": "^8.11.5",
+    "sqlite3": "^5.1.7",
+    "telegraf": "^4.16.3"
+  }
+}

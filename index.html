@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="ru" class="light">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+    <title>Cottage Care — Управление курортом</title>
+    <!-- Tailwind & Plugins -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Google Fonts & Icon Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Manrope:wght@600;700;800&family=IBM+Plex+Sans:wght@500;600&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link href="index.css" rel="stylesheet"/>
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "inverse-surface": "#2f3130",
+                "on-tertiary": "#ffffff",
+                "surface-variant": "#e2e3e1",
+                "on-surface-variant": "#42484a",
+                "on-primary": "#on-primary",
+                "inverse-on-surface": "#f1f1ef",
+                "secondary-container": "#c9e8cb",
+                "secondary-fixed": "#cceace",
+                "primary": "#324e58",
+                "on-error": "#ffffff",
+                "secondary-fixed-dim": "#b0ceb2",
+                "on-tertiary-fixed": "#171d1b",
+                "outline-variant": "#c2c7ca",
+                "error": "#ba1a1a",
+                "surface-container": "#eeeeec",
+                "tertiary-fixed-dim": "#c2c8c5",
+                "surface-container-lowest": "#ffffff",
+                "tertiary": "#464b49",
+                "surface-container-high": "#e8e8e6",
+                "error-container": "#ffdad6",
+                "on-secondary": "#ffffff",
+                "surface-container-low": "#f4f4f2",
+                "background": "#f9f9f7",
+                "secondary": "#4a654e",
+                "tertiary-fixed": "#dfe4e1",
+                "primary-container": "#4a6670",
+                "on-secondary-container": "#4e6952",
+                "on-primary-container": "#c5e3ef",
+                "surface-container-highest": "#e2e3e1",
+                "surface": "#f9f9f7",
+                "surface-tint": "#47636c",
+                "on-secondary-fixed-variant": "#334d38",
+                "outline": "#72787b",
+                "primary-fixed-dim": "#aecbd7",
+                "primary-fixed": "#c9e7f3",
+                "on-tertiary-fixed-variant": "#424846",
+                "tertiary-container": "#5d6361",
+                "surface-bright": "#f9f9f7",
+                "on-tertiary-container": "#dadfdc",
+                "on-primary-fixed": "#001f27",
+                "on-error-container": "#93000a",
+                "surface-dim": "#dadad8",
+                "on-surface": "#1a1c1b",
+                "on-background": "#1a1c1b",
+                "inverse-primary": "#aecbd7",
+                "on-primary-fixed-variant": "#2f4b54",
+                "on-secondary-fixed": "#07200f"
+              },
+              borderRadius: {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+              },
+              spacing: {
+                "touch-target": "48px",
+                "xl": "32px",
+                "unit": "8px",
+                "sm": "8px",
+                "md": "16px",
+                "lg": "24px",
+                "gutter": "16px",
+                "margin-desktop": "40px",
+                "margin-mobile": "16px",
+                "xs": "4px"
+              }
+            }
+          }
+        }
+    </script>
+</head>
+<body class="flex min-h-screen overflow-x-hidden bg-background text-on-surface">
+
+    <!-- Desktop Sidebar -->
+    <aside class="hidden md:flex flex-col py-lg gap-sm h-screen w-80 bg-surface-container-low border-r border-outline-variant/20 sticky top-0">
+        <div class="px-lg pb-md">
+            <h1 class="font-headline-lg text-2xl font-extrabold text-primary flex items-center gap-xs">
+                <span class="material-symbols-outlined text-[32px] text-secondary">cottage</span>
+                Cottage Care
+            </h1>
+            <div class="mt-lg flex items-center gap-md p-md bg-white rounded-xl border border-outline-variant/10 shadow-sm">
+                <div class="w-12 h-12 rounded-full overflow-hidden bg-primary-fixed border-2 border-primary-container relative">
+                    <img id="user-avatar" class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=150" alt="Avatar"/>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p id="user-name" class="font-semibold text-sm text-primary truncate">Анна Ковалева</p>
+                    <p id="user-role-badge" class="text-xs text-on-surface-variant font-medium">Супервайзер</p>
+                </div>
+            </div>
+        </div>
+        <nav class="flex-1 space-y-1 px-sm">
+            <button onclick="switchTab('cleaning')" data-tab="cleaning" class="w-full text-left font-semibold rounded-full px-4 h-12 flex items-center gap-md transition-all text-on-surface-variant hover:bg-surface-container-highest">
+                <span class="material-symbols-outlined">cleaning_services</span>
+                <span>План уборок</span>
+            </button>
+            <button onclick="switchTab('laundry')" data-tab="laundry" class="w-full text-left font-semibold rounded-full px-4 h-12 flex items-center gap-md transition-all text-on-surface-variant hover:bg-surface-container-highest">
+                <span class="material-symbols-outlined">local_laundry_service</span>
+                <span>Учет белья</span>
+            </button>
+            <button onclick="switchTab('requests')" data-tab="requests" class="w-full text-left font-semibold rounded-full px-4 h-12 flex items-center gap-md transition-all text-on-surface-variant hover:bg-surface-container-highest">
+                <span class="material-symbols-outlined">priority_high</span>
+                <span>Заявки</span>
+            </button>
+            <button onclick="switchTab('reports')" data-tab="reports" class="w-full text-left font-semibold rounded-full px-4 h-12 flex items-center gap-md transition-all text-on-surface-variant hover:bg-surface-container-highest">
+                <span class="material-symbols-outlined">assessment</span>
+                <span>Отчеты качества</span>
+            </button>
+            <button onclick="switchTab('purchases')" data-tab="purchases" class="w-full text-left font-semibold rounded-full px-4 h-12 flex items-center gap-md transition-all text-on-surface-variant hover:bg-surface-container-highest">
+                <span class="material-symbols-outlined">shopping_cart</span>
+                <span>Закупки</span>
+            </button>
+            <button onclick="switchTab('map')" data-tab="map" class="w-full text-left font-semibold rounded-full px-4 h-12 flex items-center gap-md transition-all text-on-surface-variant hover:bg-surface-container-highest">
+                <span class="material-symbols-outlined">map</span>
+                <span>Карта территории</span>
+            </button>
+        </nav>
+        <!-- Role toggle in desktop footer -->
+        <div class="px-lg pt-md border-t border-outline-variant/10">
+            <button onclick="toggleUserRole()" class="w-full h-11 bg-primary-container text-on-primary-container rounded-xl font-semibold flex items-center justify-center gap-sm active:scale-95 transition-all text-sm">
+                <span class="material-symbols-outlined text-[18px]">cached</span>
+                <span>Сменить роль</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 pb-24 md:pb-lg flex flex-col min-w-0">
+        <!-- Top App Bar -->
+        <header class="bg-surface sticky top-0 z-40 border-b border-outline-variant/10 flex justify-between items-center px-margin-mobile md:px-margin-desktop h-16 w-full">
+            <div class="flex items-center gap-sm">
+                <!-- Mobile menu placeholder or cottage logo -->
+                <span class="material-symbols-outlined text-[28px] text-primary md:hidden">cottage</span>
+                <h2 id="current-title" class="text-xl md:text-2xl text-primary font-bold font-headline-lg-mobile md:font-headline-lg">План уборок</h2>
+            </div>
+            <div class="flex items-center gap-sm">
+                <!-- Role toggle pill (header) -->
+                <button onclick="toggleUserRole()" class="flex items-center gap-xs px-3 py-1.5 rounded-full bg-secondary-container text-on-secondary-container text-xs font-semibold hover:bg-secondary-container/80 transition-all">
+                    <span class="material-symbols-outlined text-[16px] animate-spin-slow">person</span>
+                    <span id="header-role-name">Супервайзер</span>
+                </button>
+                <button onclick="refreshData()" class="material-symbols-outlined p-2 text-primary hover:bg-surface-container-high rounded-full transition-all active:scale-90">refresh</button>
+            </div>
+        </header>
+
+        <!-- Dynamic Content Section -->
+        <div id="tab-content-container" class="p-margin-mobile md:p-margin-desktop space-y-lg flex-1">
+            
+            <!-- TAB 1: Daily Cleaning Plan -->
+            <section id="tab-cleaning" class="space-y-lg">
+                <!-- Bento stats (Supervisor Only) -->
+                <div id="supervisor-bento-stats" class="grid grid-cols-3 gap-md">
+                    <div class="glass-card p-md md:p-lg rounded-xl flex flex-col justify-between h-28 border-l-[6px] border-l-secondary shadow-sm">
+                        <span class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Готовы</span>
+                        <div class="flex items-baseline gap-xs">
+                            <span id="stats-ready" class="text-3xl font-extrabold text-secondary">0</span>
+                            <span class="text-xs text-on-surface-variant">дом.</span>
+                        </div>
+                    </div>
+                    <div class="glass-card p-md md:p-lg rounded-xl flex flex-col justify-between h-28 border-l-[6px] border-l-yellow-500 shadow-sm">
+                        <span class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">В процессе</span>
+                        <div class="flex items-baseline gap-xs">
+                            <span id="stats-progress" class="text-3xl font-extrabold text-yellow-600">0</span>
+                            <span class="text-xs text-on-surface-variant">дом.</span>
+                        </div>
+                    </div>
+                    <div class="glass-card p-md md:p-lg rounded-xl flex flex-col justify-between h-28 border-l-[6px] border-l-orange-500 shadow-sm animate-pulse-slow">
+                        <span class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Ждут проверки</span>
+                        <div class="flex items-baseline gap-xs">
+                            <span id="stats-review" class="text-3xl font-extrabold text-orange-600">0</span>
+                            <span class="text-xs text-on-surface-variant">дом.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Maid banner (Maid Only) -->
+                <div id="maid-banner" class="hidden bg-secondary-container/40 p-lg rounded-xl border border-secondary-container/60 flex items-center gap-md">
+                    <span class="material-symbols-outlined text-[36px] text-secondary">assignment_ind</span>
+                    <div>
+                        <h4 class="font-bold text-primary">Кабинет Горничной</h4>
+                        <p class="text-sm text-on-surface-variant">Ниже показаны назначенные вам домики. Отмечайте шаги уборки по чек-листу.</p>
+                    </div>
+                </div>
+
+                <!-- Filters & Search -->
+                <div class="flex flex-col md:flex-row gap-md items-start md:items-center justify-between bg-surface-container-low p-md rounded-xl">
+                    <div class="flex flex-wrap gap-xs">
+                        <button onclick="filterCottages('all')" data-filter="all" class="filter-btn bg-primary text-white px-4 py-2 rounded-full text-xs font-semibold transition-all">Все</button>
+                        <button onclick="filterCottages('выезд+заезд')" data-filter="выезд+заезд" class="filter-btn bg-white border border-outline-variant text-on-surface-variant px-4 py-2 rounded-full text-xs font-semibold hover:bg-surface-container-highest transition-all">Выезд+Заезд 🚨</button>
+                        <button onclick="filterCottages('выезд')" data-filter="выезд" class="filter-btn bg-white border border-outline-variant text-on-surface-variant px-4 py-2 rounded-full text-xs font-semibold hover:bg-surface-container-highest transition-all">Выезд</button>
+                        <button onclick="filterCottages('промежуточная')" data-filter="промежуточная" class="filter-btn bg-white border border-outline-variant text-on-surface-variant px-4 py-2 rounded-full text-xs font-semibold hover:bg-surface-container-highest transition-all">Промежуточная</button>
+                    </div>
+                    <div class="relative w-full md:w-64">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+                        <input id="search-input" oninput="searchCottages()" class="w-full bg-white border border-outline-variant/30 rounded-full pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Поиск домика..." type="text"/>
+                    </div>
+                </div>
+
+                <!-- Cottage Grid -->
+                <div id="cottages-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-md">
+                    <!-- Cottage cards loaded dynamically via app.js -->
+                </div>
+            </section>
+
+            <!-- TAB 2: Laundry & Stock -->
+            <section id="tab-laundry" class="hidden space-y-lg">
+                <!-- Linen Forecast Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+                    <!-- Today needs -->
+                    <div class="glass-card p-lg rounded-xl border border-outline-variant/20 shadow-sm bg-white">
+                        <h3 class="font-bold text-primary flex items-center gap-xs mb-md border-b pb-sm">
+                            <span class="material-symbols-outlined text-secondary">today</span>
+                            Потребность на СЕГОДНЯ
+                        </h3>
+                        <div id="laundry-today-list" class="space-y-sm text-sm">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                    <!-- Tomorrow needs -->
+                    <div class="glass-card p-lg rounded-xl border border-outline-variant/20 shadow-sm bg-white">
+                        <h3 class="font-bold text-primary flex items-center gap-xs mb-md border-b pb-sm">
+                            <span class="material-symbols-outlined text-primary">date_range</span>
+                            Прогноз на ЗАВТРА
+                        </h3>
+                        <div id="laundry-tomorrow-list" class="space-y-sm text-sm">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stock Management Section -->
+                <div class="bg-white rounded-xl border border-outline-variant/10 shadow-sm p-lg">
+                    <div class="flex justify-between items-center mb-md border-b pb-sm">
+                        <h3 class="font-extrabold text-primary text-lg flex items-center gap-xs">
+                            <span class="material-symbols-outlined text-secondary">inventory</span>
+                            Текущий чистый остаток на складе
+                        </h3>
+                        <span id="laundry-edit-status" class="text-xs text-on-surface-variant italic">Изменения автосохраняются</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-md" id="laundry-stock-inputs">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: Technical Requests -->
+            <section id="tab-requests" class="hidden space-y-md">
+                <!-- Tab sub-navigation -->
+                <div class="flex items-center gap-lg mb-md border-b border-outline-variant/20">
+                    <button class="pb-sm font-bold text-sm transition-colors border-b-2 border-primary text-primary" id="req-subtab-urgent" onclick="switchRequestSubtab('urgent')">
+                        Срочные (сделать сейчас)
+                    </button>
+                    <button class="pb-sm font-semibold text-sm transition-colors text-on-surface-variant hover:text-on-surface" id="req-subtab-maintenance" onclick="switchRequestSubtab('maintenance')">
+                        Технические заявки (мастеру)
+                    </button>
+                </div>
+
+                <!-- Urgent Tasks Content -->
+                <div id="req-content-urgent" class="space-y-md">
+                    <div class="flex justify-between items-center mb-xs">
+                        <h3 class="font-bold text-primary text-base">Быстрые недочеты на сегодня</h3>
+                        <span id="urgent-badge" class="bg-error-container text-on-error-container px-3 py-1 rounded-full text-xs font-semibold">0 В очереди</span>
+                    </div>
+                    <div id="urgent-requests-list" class="space-y-md">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </div>
+
+                <!-- Maintenance Tasks Content -->
+                <div id="req-content-maintenance" class="hidden space-y-md">
+                    <div class="flex justify-between items-center mb-xs">
+                        <h3 class="font-bold text-primary text-base">Крупные поломки для техников</h3>
+                        <span id="maintenance-badge" class="bg-primary-container text-on-primary-container px-3 py-1 rounded-full text-xs font-semibold">0 Активно</span>
+                    </div>
+                    <div id="maintenance-requests-list" class="space-y-md">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: Quality & Reports -->
+            <section id="tab-reports" class="hidden space-y-lg">
+                <!-- Aggregated stats -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+                    <!-- Rating circular card -->
+                    <div class="bg-white p-lg rounded-xl border border-outline-variant/10 shadow-sm flex items-center gap-lg">
+                        <div class="w-20 h-20 rounded-full border-4 border-secondary flex flex-col justify-center items-center bg-secondary-container/20">
+                            <span id="avg-rating-score" class="text-2xl font-extrabold text-primary">5.0</span>
+                            <span class="text-[10px] text-secondary font-bold">Оценка</span>
+                        </div>
+                        <div>
+                            <h3 class="font-extrabold text-primary text-lg">Качество уборки</h3>
+                            <p class="text-sm text-on-surface-variant">Средний балл уборок на основе отзывов супервайзеров за неделю.</p>
+                            <div class="mt-sm flex gap-xs text-yellow-500" id="avg-rating-stars">
+                                <!-- Star icons -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Common issues list -->
+                    <div class="bg-white p-lg rounded-xl border border-outline-variant/10 shadow-sm">
+                        <h3 class="font-bold text-primary flex items-center gap-xs mb-sm">
+                            <span class="material-symbols-outlined text-error">warning</span>
+                            Частые замечания (Косяки)
+                        </h3>
+                        <ul id="common-issues-list" class="space-y-xs text-sm">
+                            <!-- Loaded dynamically -->
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- History list -->
+                <div class="bg-white rounded-xl border border-outline-variant/10 shadow-sm p-lg">
+                    <h3 class="font-extrabold text-primary text-lg mb-md flex items-center gap-xs">
+                        <span class="material-symbols-outlined text-secondary">history</span>
+                        История проверок
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-surface-container-low text-on-surface-variant font-semibold text-xs border-b">
+                                <tr>
+                                    <th class="p-md">Домик</th>
+                                    <th class="p-md">Дата</th>
+                                    <th class="p-md">Оценка</th>
+                                    <th class="p-md">Комментарии супервайзера</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reviews-history-table">
+                                <!-- Loaded dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 5: Purchases -->
+            <section id="tab-purchases" class="hidden space-y-md">
+                <div class="bg-white p-lg rounded-xl border border-outline-variant/10 shadow-sm">
+                    <h3 class="font-extrabold text-primary text-lg mb-md flex items-center gap-xs">
+                        <span class="material-symbols-outlined text-secondary">playlist_add</span>
+                        Добавить позицию на дозакупку
+                    </h3>
+                    <form id="purchase-form" onsubmit="addPurchaseItem(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-md items-end">
+                        <div>
+                            <label class="block text-xs font-semibold text-on-surface-variant mb-xs">Название (мыло, туалетная бумага и др.)</label>
+                            <input id="purchase-item-name" type="text" required class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-md py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"/>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-on-surface-variant mb-xs">Количество (шт, пачки)</label>
+                            <input id="purchase-item-qty" type="number" required min="1" class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-md py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"/>
+                        </div>
+                        <button type="submit" class="h-10 bg-primary text-white rounded-xl font-bold flex items-center justify-center gap-sm active:scale-95 transition-all">
+                            <span class="material-symbols-outlined text-[18px]">add</span>
+                            <span>Добавить</span>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="bg-white rounded-xl border border-outline-variant/10 shadow-sm p-lg">
+                    <div class="flex justify-between items-center mb-md border-b pb-sm">
+                        <h3 class="font-bold text-primary text-lg flex items-center gap-xs">
+                            <span class="material-symbols-outlined text-secondary">shopping_cart</span>
+                            Список закупки
+                        </h3>
+                        <div class="flex gap-sm">
+                            <button onclick="copyPurchaseRequest()" class="bg-secondary-container text-on-secondary-container px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-xs hover:bg-secondary-container/80 transition-all">
+                                <span class="material-symbols-outlined text-[16px]">content_copy</span>Скопировать заявку
+                            </button>
+                            <button onclick="clearPurchased()" class="bg-surface-container-high text-on-surface-variant px-3 py-1.5 rounded-full text-xs font-bold hover:bg-surface-container-highest transition-all">
+                                Очистить купленное
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-surface-container-low text-on-surface-variant font-semibold text-xs border-b">
+                                <tr>
+                                    <th class="p-md">Материал</th>
+                                    <th class="p-md">Количество</th>
+                                    <th class="p-md">Дата добавления</th>
+                                    <th class="p-md">Статус</th>
+                                </tr>
+                            </thead>
+                            <tbody id="purchases-table-body">
+                                <!-- Loaded dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 6: Map -->
+            <section id="tab-map" class="hidden space-y-md">
+                <div class="bg-white p-lg rounded-xl border border-outline-variant/10 shadow-sm">
+                    <h3 class="font-extrabold text-primary text-lg mb-sm">Схема территории resort-комплекса</h3>
+                    <p class="text-sm text-on-surface-variant mb-md">Вы можете кликать на домики на карте, чтобы быстро просмотреть их текущий статус уборки.</p>
+                    
+                    <!-- SVG Resort Map (Clean, premium vector style) -->
+                    <div class="w-full border rounded-xl overflow-hidden bg-[#e2f0d9] p-2 relative flex justify-center items-center min-h-[350px]">
+                        <svg viewBox="0 0 800 500" class="w-full h-auto max-w-[700px] select-none" id="resort-svg-map">
+                            <!-- Forests/Trees -->
+                            <rect x="0" y="0" width="800" height="500" fill="#e2f0d9" rx="12"/>
+                            
+                            <!-- Forest patches (Background) -->
+                            <path d="M 50,50 Q 80,30 110,60 T 170,50 T 230,80 T 150,120 Z" fill="#c5e0b4" opacity="0.6" />
+                            <path d="M 600,80 Q 640,50 680,90 T 750,70 T 780,150 T 670,180 Z" fill="#c5e0b4" opacity="0.6" />
+                            <path d="M 100,350 Q 150,320 200,360 T 280,330 T 220,450 Z" fill="#c5e0b4" opacity="0.6" />
+                            <path d="M 550,380 Q 600,330 650,390 T 720,350 T 680,470 Z" fill="#c5e0b4" opacity="0.6" />
+
+                            <!-- Paths/Walkways (Sandy color) -->
+                            <path d="M 400,450 L 400,250 Q 400,200 350,180 L 150,180" fill="none" stroke="#f2ddc9" stroke-width="24" stroke-linecap="round" />
+                            <path d="M 400,250 Q 400,200 450,180 L 650,180" fill="none" stroke="#f2ddc9" stroke-width="24" stroke-linecap="round" />
+                            <path d="M 350,180 Q 250,150 250,100" fill="none" stroke="#f2ddc9" stroke-width="16" stroke-linecap="round" />
+                            <path d="M 450,180 Q 550,150 550,100" fill="none" stroke="#f2ddc9" stroke-width="16" stroke-linecap="round" />
+                            
+                            <!-- Walkways Inner lines -->
+                            <path d="M 400,450 L 400,250 Q 400,200 350,180 L 150,180" fill="none" stroke="#fceddc" stroke-width="14" stroke-linecap="round" />
+                            <path d="M 400,250 Q 400,200 450,180 L 650,180" fill="none" stroke="#fceddc" stroke-width="14" stroke-linecap="round" />
+                            
+                            <!-- Reception (Admin Building) -->
+                            <g transform="translate(360, 380)" class="cursor-pointer">
+                                <rect x="0" y="0" width="80" height="60" fill="#324e58" rx="8" stroke="#ffffff" stroke-width="2"/>
+                                <polygon points="0,0 40,-20 80,0" fill="#203239"/>
+                                <text x="40" y="35" font-family="'Inter'" font-size="11" font-weight="bold" fill="#ffffff" text-anchor="middle">РЕЦЕПШН</text>
+                            </g>
+
+                            <!-- Cabins (Cottages) -->
+                            <!-- Cottage 1 -->
+                            <g id="map-cabin-1" onclick="onMapCottageClick(1)" class="cursor-pointer group">
+                                <rect x="100" y="140" width="55" height="45" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2" class="transition-all duration-300"/>
+                                <polygon points="100,140 127.5,120 155,140" fill="#464b49" class="transition-all duration-300"/>
+                                <text x="127.5" y="167" font-family="'Inter'" font-size="13" font-weight="bold" fill="#324e58" text-anchor="middle">№1</text>
+                            </g>
+
+                            <!-- Cottage 2 -->
+                            <g id="map-cabin-2" onclick="onMapCottageClick(2)" class="cursor-pointer group">
+                                <rect x="220" y="70" width="55" height="45" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
+                                <polygon points="220,70 247.5,50 275,70" fill="#464b49"/>
+                                <text x="247.5" y="97" font-family="'Inter'" font-size="13" font-weight="bold" fill="#324e58" text-anchor="middle">№2</text>
+                            </g>
+
+                            <!-- Cottage 3 -->
+                            <g id="map-cabin-3" onclick="onMapCottageClick(3)" class="cursor-pointer group">
+                                <rect x="520" y="70" width="55" height="45" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
+                                <polygon points="520,70 547.5,50 575,70" fill="#464b49"/>
+                                <text x="547.5" y="97" font-family="'Inter'" font-size="13" font-weight="bold" fill="#324e58" text-anchor="middle">№3</text>
+                            </g>
+
+                            <!-- Cottage 4 -->
+                            <g id="map-cabin-4" onclick="onMapCottageClick(4)" class="cursor-pointer group">
+                                <rect x="640" y="140" width="55" height="45" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
+                                <polygon points="640,140 667.5,120 695,140" fill="#464b49"/>
+                                <text x="667.5" y="167" font-family="'Inter'" font-size="13" font-weight="bold" fill="#324e58" text-anchor="middle">№4</text>
+                            </g>
+
+                            <!-- Cottage 5 -->
+                            <g id="map-cabin-5" onclick="onMapCottageClick(5)" class="cursor-pointer group">
+                                <rect x="220" y="240" width="55" height="45" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
+                                <polygon points="220,240 247.5,220 275,240" fill="#464b49"/>
+                                <text x="247.5" y="267" font-family="'Inter'" font-size="13" font-weight="bold" fill="#324e58" text-anchor="middle">№5</text>
+                            </g>
+
+                            <!-- Cottage 6 -->
+                            <g id="map-cabin-6" onclick="onMapCottageClick(6)" class="cursor-pointer group">
+                                <rect x="525" y="240" width="55" height="45" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
+                                <polygon points="525,240 552.5,220 580,240" fill="#464b49"/>
+                                <text x="552.5" y="267" font-family="'Inter'" font-size="13" font-weight="bold" fill="#324e58" text-anchor="middle">№6</text>
+                            </g>
+                        </svg>
+
+                        <!-- Color indicators Legend -->
+                        <div class="absolute bottom-4 left-4 bg-white/95 px-md py-sm rounded-xl border text-xs space-y-1 shadow-sm">
+                            <p class="font-bold text-primary mb-xs">Статусы уборок:</p>
+                            <div class="flex items-center gap-xs"><span class="w-3 h-3 bg-white border rounded"></span> <span>Свободен / Не начат</span></div>
+                            <div class="flex items-center gap-xs"><span class="w-3 h-3 bg-yellow-400 rounded"></span> <span>Уборка в процессе</span></div>
+                            <div class="flex items-center gap-xs"><span class="w-3 h-3 bg-orange-500 rounded"></span> <span>Ждет проверки</span></div>
+                            <div class="flex items-center gap-xs"><span class="w-3 h-3 bg-green-500 rounded"></span> <span>Проверен / Готов</span></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- FAB for adding new requests/materials (Supervisor view only) -->
+    <div id="supervisor-fab-container" class="fixed right-6 bottom-20 md:bottom-6 z-50 flex flex-col gap-sm">
+        <!-- New request button -->
+        <button onclick="openNewRequestModal()" title="Добавить тех. заявку" class="w-12 h-12 bg-primary text-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-90 transition-all">
+            <span class="material-symbols-outlined">report_problem</span>
+        </button>
+    </div>
+
+    <!-- Bottom Navigation Bar (Mobile Only) -->
+    <nav class="md:hidden fixed bottom-0 left-0 w-full z-50 h-16 bg-white border-t border-outline-variant/10 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] flex justify-around items-center w-full pb-safe">
+        <button onclick="switchTab('cleaning')" data-mobile-tab="cleaning" class="flex flex-col items-center justify-center text-primary-container px-3 py-1">
+            <span class="material-symbols-outlined">cleaning_services</span>
+            <span class="text-[10px] font-semibold">Уборки</span>
+        </button>
+        <button onclick="switchTab('laundry')" data-mobile-tab="laundry" class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all px-3 py-1">
+            <span class="material-symbols-outlined">local_laundry_service</span>
+            <span class="text-[10px] font-semibold">Белье</span>
+        </button>
+        <button onclick="switchTab('requests')" data-mobile-tab="requests" class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all px-3 py-1 relative">
+            <span class="material-symbols-outlined">priority_high</span>
+            <span class="text-[10px] font-semibold">Заявки</span>
+            <span id="requests-badge-bubble" class="hidden absolute top-0.5 right-3 w-4 h-4 bg-error text-white text-[9px] rounded-full flex items-center justify-center font-bold">0</span>
+        </button>
+        <button onclick="switchTab('reports')" data-mobile-tab="reports" class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all px-3 py-1">
+            <span class="material-symbols-outlined">assessment</span>
+            <span class="text-[10px] font-semibold">Отчеты</span>
+        </button>
+        <button onclick="switchTab('map')" data-mobile-tab="map" class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all px-3 py-1">
+            <span class="material-symbols-outlined">map</span>
+            <span class="text-[10px] font-semibold">Карта</span>
+        </button>
+    </nav>
+
+    <!-- ==================== MODALS ==================== -->
+
+    <!-- MODAL 1: Cottage Inspection & Review (Supervisor Version) -->
+    <div id="inspector-modal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-md">
+        <div class="bg-white w-full max-w-lg rounded-xl overflow-hidden shadow-2xl animate-fade-in">
+            <div class="bg-primary text-white p-lg flex justify-between items-start">
+                <div>
+                    <h3 id="inspect-cottage-title" class="font-extrabold text-xl">Домик №1</h3>
+                    <p id="inspect-cottage-type" class="text-sm text-primary-fixed/80">Выезд + Заезд</p>
+                </div>
+                <button onclick="closeInspectorModal()" class="material-symbols-outlined text-white hover:bg-white/20 p-1.5 rounded-full transition-all">close</button>
+            </div>
+            
+            <div class="p-lg space-y-md max-h-[75dvh] overflow-y-auto">
+                <!-- Cottage Stats Info -->
+                <div class="grid grid-cols-2 gap-sm text-sm border-b pb-md">
+                    <div>
+                        <span class="text-on-surface-variant block text-xs">Приоритет:</span>
+                        <div class="flex items-center gap-xs mt-xs">
+                            <button onclick="changeCottagePriority(-1)" class="w-6 h-6 border rounded bg-surface-container flex items-center justify-center font-bold active:scale-90">-</button>
+                            <span id="inspect-priority-val" class="font-bold text-primary">1</span>
+                            <button onclick="changeCottagePriority(1)" class="w-6 h-6 border rounded bg-surface-container flex items-center justify-center font-bold active:scale-90">+</button>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="text-on-surface-variant block text-xs">Комплектация белья:</span>
+                        <p id="inspect-beds-info" class="font-semibold text-primary mt-1">1Б, 2М, 1 резинок</p>
+                    </div>
+                </div>
+
+                <!-- Maid actions detail -->
+                <div class="bg-surface-container-low p-md rounded-xl space-y-sm">
+                    <h4 class="font-bold text-sm text-primary flex items-center gap-xs">
+                        <span class="material-symbols-outlined text-[20px]">assignment</span>
+                        Выполнение чек-листа
+                    </h4>
+                    <div id="inspect-checklist-progress-bar" class="w-full bg-surface-container-high h-2.5 rounded-full overflow-hidden">
+                        <div class="bg-secondary h-full" style="width: 50%"></div>
+                    </div>
+                    <ul id="inspect-checklist-done-items" class="text-xs space-y-xs text-on-surface-variant pl-4 list-disc">
+                        <!-- List of checked items -->
+                    </ul>
+                    <div id="inspect-maid-comment-container" class="mt-sm pt-xs border-t border-outline-variant/20 hidden">
+                        <span class="text-xs font-semibold text-primary block">Комментарий горничной:</span>
+                        <p id="inspect-maid-comment" class="text-xs italic text-on-surface-variant mt-1"></p>
+                    </div>
+                </div>
+
+                <!-- Review Form (Only show if cottage status is 'orange' or 'green') -->
+                <div id="inspect-review-panel" class="space-y-sm border-t pt-md">
+                    <h4 class="font-bold text-sm text-primary">Оценка качества и приемка</h4>
+                    
+                    <!-- Star selector -->
+                    <div class="flex gap-sm justify-center my-md">
+                        <span onclick="setReviewRating(1)" class="rating-star material-symbols-outlined text-[36px] cursor-pointer text-gray-300">star</span>
+                        <span onclick="setReviewRating(2)" class="rating-star material-symbols-outlined text-[36px] cursor-pointer text-gray-300">star</span>
+                        <span onclick="setReviewRating(3)" class="rating-star material-symbols-outlined text-[36px] cursor-pointer text-gray-300">star</span>
+                        <span onclick="setReviewRating(4)" class="rating-star material-symbols-outlined text-[36px] cursor-pointer text-gray-300">star</span>
+                        <span onclick="setReviewRating(5)" class="rating-star material-symbols-outlined text-[36px] cursor-pointer text-gray-300">star</span>
+                    </div>
+
+                    <textarea id="inspect-review-comment" placeholder="Добавьте замечания или похвалу..." class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-md py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 h-20"></textarea>
+                    
+                    <button onclick="submitCottageReview()" class="w-full h-12 bg-secondary text-white rounded-xl font-bold flex items-center justify-center gap-sm active:scale-95 transition-all">
+                        <span class="material-symbols-outlined">check_circle</span>
+                        <span>Принять и отметить "Готов"</span>
+                    </button>
+                </div>
+
+                <!-- Manual status change for other states -->
+                <div id="inspect-manual-status-panel" class="space-y-sm border-t pt-md flex gap-sm">
+                    <button onclick="changeCottageStatus('white')" class="flex-1 h-10 border rounded-lg text-xs font-semibold hover:bg-slate-50">Сбросить статус</button>
+                    <button onclick="changeCottageStatus('yellow')" class="flex-1 h-10 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded-lg text-xs font-semibold hover:bg-yellow-200">Начать уборку</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: Digital Checklist & Task (Maid Version) -->
+    <div id="maid-modal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-md">
+        <div class="bg-white w-full max-w-lg rounded-xl overflow-hidden shadow-2xl animate-fade-in">
+            <div class="bg-secondary text-white p-lg flex justify-between items-start">
+                <div>
+                    <h3 id="maid-cottage-title" class="font-extrabold text-xl">Домик №1</h3>
+                    <p id="maid-cottage-type" class="text-sm text-secondary-fixed/80">Выезд + Заезд</p>
+                </div>
+                <button onclick="closeMaidModal()" class="material-symbols-outlined text-white hover:bg-white/20 p-1.5 rounded-full transition-all">close</button>
+            </div>
+            
+            <div class="p-lg space-y-md max-h-[75dvh] overflow-y-auto">
+                
+                <!-- Main Maid CTA buttons (Status control) -->
+                <div id="maid-status-controls" class="flex gap-md">
+                    <!-- Start clean button -->
+                    <button id="maid-btn-start" onclick="maidStartClean()" class="flex-1 h-12 bg-yellow-400 text-yellow-900 rounded-xl font-bold flex items-center justify-center gap-sm active:scale-95 transition-all">
+                        <span class="material-symbols-outlined">play_arrow</span>
+                        <span>Войти на уборку</span>
+                    </button>
+                    <!-- Complete clean button -->
+                    <button id="maid-btn-complete" onclick="maidCompleteClean()" class="flex-1 h-12 bg-primary text-white rounded-xl font-bold flex items-center justify-center gap-sm active:scale-95 transition-all opacity-50 cursor-not-allowed" disabled>
+                        <span class="material-symbols-outlined">task_alt</span>
+                        <span>Закончить уборку</span>
+                    </button>
+                </div>
+
+                <!-- Digital Checklist checklist checkboxes -->
+                <div id="maid-checklist-section" class="space-y-sm border-t pt-md opacity-50 pointer-events-none">
+                    <h4 class="font-bold text-sm text-primary">Чек-лист уборки</h4>
+                    <div id="maid-checklist-list" class="space-y-sm">
+                        <!-- Populated dynamically with checkboxes -->
+                    </div>
+                </div>
+
+                <!-- Comment & Fault Reporting -->
+                <div class="space-y-sm border-t pt-md">
+                    <h4 class="font-bold text-sm text-primary">Комментарии к уборке</h4>
+                    <textarea id="maid-text-comment" placeholder="Добавьте ваш комментарий (например, 'не хватило полотенец, донесу позже')" class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-md py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 h-20"></textarea>
+                    
+                    <button onclick="openMaidReportFaultModal()" class="w-full h-11 border-2 border-dashed border-error text-error rounded-xl font-semibold flex items-center justify-center gap-sm active:scale-95 transition-all text-sm mt-sm">
+                        <span class="material-symbols-outlined text-[20px]">report_problem</span>
+                        <span>Сообщить о поломке техникам</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: New Tech Request Modal -->
+    <div id="request-modal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-md">
+        <div class="bg-white w-full max-w-md rounded-xl overflow-hidden shadow-2xl animate-fade-in">
+            <div class="bg-primary text-white p-lg flex justify-between items-center">
+                <h3 class="font-bold text-lg">Новая заявка о неисправности</h3>
+                <button onclick="closeNewRequestModal()" class="material-symbols-outlined text-white hover:bg-white/20 p-1.5 rounded-full transition-all">close</button>
+            </div>
+            <form onsubmit="submitNewRequest(event)" class="p-lg space-y-md">
+                <div>
+                    <label class="block text-xs font-semibold text-on-surface-variant mb-xs">Номер домика</label>
+                    <select id="req-cottage-number" required class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-md py-2 text-sm focus:outline-none">
+                        <!-- Loaded dynamically -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-on-surface-variant mb-xs">Категория заявки</label>
+                    <div class="grid grid-cols-2 gap-sm">
+                        <label class="flex items-center gap-sm p-sm border rounded-lg cursor-pointer hover:bg-slate-50">
+                            <input type="radio" name="req-category" value="housekeeping" checked class="text-primary"/>
+                            <span class="text-xs font-bold text-primary">Быстрая (бумага, лампочка)</span>
+                        </label>
+                        <label class="flex items-center gap-sm p-sm border rounded-lg cursor-pointer hover:bg-slate-50">
+                            <input type="radio" name="req-category" value="maintenance" class="text-primary"/>
+                            <span class="text-xs font-bold text-primary">Ремонт (техник, кран, ручка)</span>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-on-surface-variant mb-xs">Срочность</label>
+                    <select id="req-urgency" class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-md py-2 text-sm focus:outline-none">
+                        <option value="normal">Планово</option>
+                        <option value="urgent">Срочно (сделать сейчас!)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-on-surface-variant mb-xs">Что нужно сделать/починить?</label>
+                    <textarea id="req-description" required placeholder="Опишите детальнее поломку или нехватку материалов..." class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-md py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 h-24"></textarea>
+                </div>
+                <button type="submit" class="w-full h-12 bg-primary text-white rounded-xl font-bold flex items-center justify-center gap-sm active:scale-95 transition-all">
+                    <span class="material-symbols-outlined">send</span>
+                    <span>Отправить заявку</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="app.js"></script>
+</body>
+</html>
