@@ -272,17 +272,25 @@
                     <div id="add-laundry-category-container" class="mb-lg bg-surface-container-low p-md rounded-xl border border-outline-variant/10 max-w-xl hidden">
                         <h4 class="font-bold text-primary text-xs mb-xs uppercase tracking-wider">Добавить новую позицию белья</h4>
                         <form id="add-laundry-form" onsubmit="addLaundryCategory(event)" class="flex flex-wrap gap-sm items-end">
-                            <div class="flex-1 min-w-[150px]">
-                                <label class="block text-[10px] text-on-surface-variant font-semibold mb-1">Код (ID, например: pillow_big)</label>
+                            <div class="flex-1 min-w-[140px]">
+                                <label class="block text-[10px] text-on-surface-variant font-semibold mb-1">Код (например: pillow_big)</label>
                                 <input id="add-laundry-name" type="text" required placeholder="pillow_big" class="w-full bg-white border border-outline-variant/30 rounded-lg px-2 py-1 text-xs focus:outline-none"/>
                             </div>
-                            <div class="flex-1 min-w-[200px]">
+                            <div class="flex-1 min-w-[160px]">
                                 <label class="block text-[10px] text-on-surface-variant font-semibold mb-1">Название (например: Наволочка 70x70)</label>
                                 <input id="add-laundry-display" type="text" required placeholder="Наволочка 70x70" class="w-full bg-white border border-outline-variant/30 rounded-lg px-2 py-1 text-xs focus:outline-none"/>
                             </div>
-                            <div class="w-24">
-                                <label class="block text-[10px] text-on-surface-variant font-semibold mb-1">Количество</label>
-                                <input id="add-laundry-qty" type="number" min="0" value="0" class="w-full bg-white border border-outline-variant/30 rounded-lg px-2 py-1 text-xs text-center focus:outline-none"/>
+                            <div class="w-20">
+                                <label class="block text-[9px] text-on-surface-variant font-semibold mb-1">Глаженое</label>
+                                <input id="add-laundry-qty-ironed" type="number" min="0" value="0" class="w-full bg-white border border-outline-variant/30 rounded-lg px-2 py-1 text-xs text-center focus:outline-none"/>
+                            </div>
+                            <div class="w-20">
+                                <label class="block text-[9px] text-on-surface-variant font-semibold mb-1">Неглаженое</label>
+                                <input id="add-laundry-qty-unironed" type="number" min="0" value="0" class="w-full bg-white border border-outline-variant/30 rounded-lg px-2 py-1 text-xs text-center focus:outline-none"/>
+                            </div>
+                            <div class="w-20">
+                                <label class="block text-[9px] text-on-surface-variant font-semibold mb-1">Грязное</label>
+                                <input id="add-laundry-qty-dirty" type="number" min="0" value="0" class="w-full bg-white border border-outline-variant/30 rounded-lg px-2 py-1 text-xs text-center focus:outline-none"/>
                             </div>
                             <button type="submit" class="h-8 bg-primary hover:bg-primary-hover text-white rounded-lg px-md font-bold text-xs active:scale-95 transition-all flex items-center gap-xs">
                                 <span class="material-symbols-outlined text-[16px]">add</span> Добавить

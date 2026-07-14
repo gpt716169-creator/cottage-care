@@ -138,6 +138,9 @@ async function createTables() {
     CREATE TABLE IF NOT EXISTS laundry_stock (
       item_name TEXT PRIMARY KEY,
       display_name TEXT NOT NULL,
+      qty_clean_ironed INTEGER DEFAULT 0,
+      qty_clean_unironed INTEGER DEFAULT 0,
+      qty_dirty INTEGER DEFAULT 0,
       quantity INTEGER DEFAULT 0
     )
   `);
@@ -267,9 +270,9 @@ async function seedInitialData() {
 
     for (const l of initialLaundry) {
       await run(`
-        INSERT INTO laundry_stock (item_name, display_name, quantity)
-        VALUES (?, ?, ?)
-      `, l);
+        INSERT INTO laundry_stock (item_name, display_name, qty_clean_ironed, qty_clean_unironed, qty_dirty, quantity)
+        VALUES (?, ?, ?, 5, 10, ?)
+      `, [l[0], l[1], l[2], l[2]]);
     }
   }
 

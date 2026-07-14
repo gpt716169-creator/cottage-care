@@ -219,9 +219,9 @@ async function startServer() {
     const { status, maid_comment } = req.body;
     
     try {
-      const oldCottage = await queryOne('SELECT status FROM cottages WHERE number = ?', [number]);
+      const oldCottage = await queryOne('SELECT status, type, stay_over_full, laundry_config FROM cottages WHERE number = ?', [number]);
       if (!oldCottage) {
-        return res.status(444).json({ error: 'Cottage not found' });
+        return res.status(404).json({ error: 'Cottage not found' });
       }
 
       await run(
@@ -232,6 +232,42 @@ async function startServer() {
       // Отправка уведомления при смене статуса на "оранжевый" (Сделано горничной, ждет проверки)
       if (status === 'orange' && oldCottage.status !== 'orange') {
         sendTelegramNotification(`🧹 **Домик №${number}** убран горничной и ждет проверки!\n📝 Комментарий горничной: "${maid_comment || 'нет комментария'}"`);
+        
+        // Автоматический учет белья: списываем чистое (глаженое) и начисляем грязное на склад
+        if (oldCottage.laundry_config) {
+          try {
+            const config = JSON.parse(oldCottage.laundry_config || '{}');
+            const isCheckout = oldCottage.type === 'выезд' || oldCottage.type === 'выезд+заезд';
+            const isStayOver = oldCottage.type === 'промежуточная';
+            
+            for (const item_name of Object.keys(config)) {
+              const qty = parseInt(config[item_name] || 0);
+              if (qty > 0) {
+                let shouldChange = false;
+                if (isCheckout) {
+                  shouldChange = true;
+                } else if (isStayOver) {
+                  if (oldCottage.stay_over_full === 1 || item_name.includes('towel')) {
+                    shouldChange = true;
+                  }
+                }
+                
+                if (shouldChange) {
+                  await run(
+                    `UPDATE laundry_stock 
+                     SET qty_clean_ironed = CASE WHEN qty_clean_ironed - ? < 0 THEN 0 ELSE qty_clean_ironed - ? END, 
+                         qty_dirty = qty_dirty + ?,
+                         quantity = CASE WHEN quantity - ? < 0 THEN 0 ELSE quantity - ? END
+                     WHERE item_name = ?`,
+                    [qty, qty, qty, qty, qty, item_name]
+                  );
+                }
+              }
+            }
+          } catch (e) {
+            console.error('Error auto-updating laundry stock on cottage complete:', e);
+          }
+        }
       }
 
       res.json({ success: true, number, status });
@@ -372,7 +408,12 @@ async function startServer() {
     const { stock } = req.body;
     try {
       for (const item of stock) {
-        await run('UPDATE laundry_stock SET quantity = ? WHERE item_name = ?', [item.quantity, item.item_name]);
+        await run(
+          `UPDATE laundry_stock 
+           SET qty_clean_ironed = ?, qty_clean_unironed = ?, qty_dirty = ?, quantity = ? 
+           WHERE item_name = ?`,
+          [item.qty_clean_ironed || 0, item.qty_clean_unironed || 0, item.qty_dirty || 0, item.qty_clean_ironed || 0, item.item_name]
+        );
       }
       res.json({ success: true, stock });
     } catch (e) {
@@ -382,13 +423,17 @@ async function startServer() {
 
   // 3. Добавить новую категорию белья
   app.post('/api/laundry', async (req, res) => {
-    const { item_name, display_name, quantity } = req.body;
+    const { item_name, display_name, qty_clean_ironed, qty_clean_unironed, qty_dirty } = req.body;
     try {
+      const q_ironed = parseInt(qty_clean_ironed) || 0;
+      const q_unironed = parseInt(qty_clean_unironed) || 0;
+      const q_dirty = parseInt(qty_dirty) || 0;
       await run(
-        'INSERT INTO laundry_stock (item_name, display_name, quantity) VALUES (?, ?, ?)',
-        [item_name, display_name, quantity || 0]
+        `INSERT INTO laundry_stock (item_name, display_name, qty_clean_ironed, qty_clean_unironed, qty_dirty, quantity) 
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [item_name, display_name, q_ironed, q_unironed, q_dirty, q_ironed]
       );
-      res.json({ success: true, item_name, display_name, quantity });
+      res.json({ success: true, item_name, display_name });
     } catch (e) {
       res.status(500).json({ error: e.message });
     }
@@ -400,6 +445,45 @@ async function startServer() {
     try {
       await run('DELETE FROM laundry_stock WHERE item_name = ?', [item_name]);
       res.json({ success: true, item_name });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  // 5. Передать в стирку (dirty -> clean_unironed)
+  app.put('/api/laundry/:item_name/wash', async (req, res) => {
+    const { item_name } = req.params;
+    const { quantity } = req.body;
+    try {
+      const washed = parseInt(quantity) || 0;
+      await run(
+        `UPDATE laundry_stock 
+         SET qty_dirty = CASE WHEN qty_dirty - ? < 0 THEN 0 ELSE qty_dirty - ? END,
+             qty_clean_unironed = qty_clean_unironed + ?
+         WHERE item_name = ?`,
+        [washed, washed, washed, item_name]
+      );
+      res.json({ success: true, item_name, washed });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  // 6. Передать в глажку (clean_unironed -> clean_ironed)
+  app.put('/api/laundry/:item_name/iron', async (req, res) => {
+    const { item_name } = req.params;
+    const { quantity } = req.body;
+    try {
+      const ironed = parseInt(quantity) || 0;
+      await run(
+        `UPDATE laundry_stock 
+         SET qty_clean_unironed = CASE WHEN qty_clean_unironed - ? < 0 THEN 0 ELSE qty_clean_unironed - ? END,
+             qty_clean_ironed = qty_clean_ironed + ?,
+             quantity = qty_clean_ironed + ?
+         WHERE item_name = ?`,
+        [ironed, ironed, ironed, ironed, item_name]
+      );
+      res.json({ success: true, item_name, ironed });
     } catch (e) {
       res.status(500).json({ error: e.message });
     }

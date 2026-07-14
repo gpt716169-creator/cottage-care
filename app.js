@@ -495,7 +495,7 @@ function renderLaundry() {
   stock.forEach(item => {
     const todayNeed = needsToday[item.item_name] || 0;
     const tomorrowNeed = needsTomorrow[item.item_name] || 0;
-    const deficit = todayNeed > item.quantity ? todayNeed - item.quantity : 0;
+    const deficit = todayNeed > (item.qty_clean_ironed || 0) ? todayNeed - (item.qty_clean_ironed || 0) : 0;
     
     const deficitText = deficit > 0 
       ? `<span class="text-error font-bold text-xs bg-error-container/40 px-2 py-0.5 rounded">Дефицит: -${deficit} шт.</span>`
@@ -508,26 +508,65 @@ function renderLaundry() {
       : '';
 
     const inputHtml = `
-      <div class="bg-surface-container-low p-md rounded-xl border border-outline-variant/15 flex flex-col justify-between gap-sm">
+      <div class="bg-surface-container-low p-md rounded-xl border border-outline-variant/15 flex flex-col gap-sm">
         <div>
           <div class="flex justify-between items-start">
-            <span class="font-bold text-primary block text-sm">${item.display_name}</span>
+            <span class="font-extrabold text-primary block text-sm">${item.display_name}</span>
             ${deleteBtn}
           </div>
           <div class="mt-xs">${deficitText}</div>
         </div>
-        <div class="flex items-center justify-between">
-          <span class="text-xs text-on-surface-variant">На складе:</span>
-          <div class="flex items-center gap-xs">
+        
+        <!-- Три состояния остатков -->
+        <div class="grid grid-cols-3 gap-xs text-center border-t border-b border-outline-variant/10 py-sm">
+          <div>
+            <span class="block text-[9px] font-semibold text-on-surface-variant mb-1">Глаженое</span>
             <input type="number" 
-                   value="${item.quantity}" 
+                   value="${item.qty_clean_ironed || 0}" 
                    min="0"
                    ${isSupervisor ? '' : 'readonly'}
-                   onchange="updateSingleStock('${item.item_name}', this.value)"
-                   class="w-20 text-center bg-white border border-outline-variant/30 rounded-lg py-1 font-bold text-primary focus:outline-none focus:ring-1 focus:ring-primary text-sm"/>
-            <span class="text-xs text-on-surface-variant font-medium">шт.</span>
+                   onchange="updateSingleStock('${item.item_name}', 'qty_clean_ironed', this.value)"
+                   class="w-full text-center bg-white border border-outline-variant/30 rounded-lg py-1 font-bold text-primary text-xs focus:outline-none"/>
+          </div>
+          <div>
+            <span class="block text-[9px] font-semibold text-on-surface-variant mb-1">Неглаженое</span>
+            <input type="number" 
+                   value="${item.qty_clean_unironed || 0}" 
+                   min="0"
+                   ${isSupervisor ? '' : 'readonly'}
+                   onchange="updateSingleStock('${item.item_name}', 'qty_clean_unironed', this.value)"
+                   class="w-full text-center bg-white border border-outline-variant/30 rounded-lg py-1 font-bold text-amber-600 text-xs focus:outline-none"/>
+          </div>
+          <div>
+            <span class="block text-[9px] font-semibold text-on-surface-variant mb-1">Грязное</span>
+            <input type="number" 
+                   value="${item.qty_dirty || 0}" 
+                   min="0"
+                   ${isSupervisor ? '' : 'readonly'}
+                   onchange="updateSingleStock('${item.item_name}', 'qty_dirty', this.value)"
+                   class="w-full text-center bg-white border border-outline-variant/30 rounded-lg py-1 font-bold text-red-600 text-xs focus:outline-none"/>
           </div>
         </div>
+
+        <!-- Быстрые действия (только супервайзер) -->
+        ${isSupervisor ? `
+        <div class="space-y-sm text-xs pt-xs">
+          <div class="flex items-center gap-xs">
+            <span class="text-[10px] text-on-surface-variant flex-1">Сдать в стирку:</span>
+            <input type="number" id="wash-qty-${item.item_name}" min="1" max="${item.qty_dirty || 1}" value="${item.qty_dirty || 0}" class="w-12 text-center bg-white border rounded py-0.5 text-xs focus:outline-none"/>
+            <button onclick="washLinen('${item.item_name}')" class="bg-blue-500 hover:bg-blue-600 text-white rounded px-2 py-1 font-bold text-[9px] active:scale-95 transition-transform flex items-center gap-0.5 whitespace-nowrap">
+              Постирать
+            </button>
+          </div>
+          <div class="flex items-center gap-xs">
+            <span class="text-[10px] text-on-surface-variant flex-1">Передать в глажку:</span>
+            <input type="number" id="iron-qty-${item.item_name}" min="1" max="${item.qty_clean_unironed || 1}" value="${item.qty_clean_unironed || 0}" class="w-12 text-center bg-white border rounded py-0.5 text-xs focus:outline-none"/>
+            <button onclick="ironLinen('${item.item_name}')" class="bg-green-500 hover:bg-green-600 text-white rounded px-2 py-1 font-bold text-[9px] active:scale-95 transition-transform flex items-center gap-0.5 whitespace-nowrap">
+              Погладить
+            </button>
+          </div>
+        </div>
+        ` : ''}
       </div>
     `;
     stockInputs.innerHTML += inputHtml;
@@ -538,7 +577,7 @@ function renderLaundry() {
         <span class="font-medium">${item.display_name}</span>
         <div class="flex items-center gap-md">
           <span class="text-on-surface-variant">Надо: <b>${todayNeed}</b></span>
-          <span class="w-16 text-right text-xs ${deficit > 0 ? 'text-error font-bold' : 'text-secondary'}">Остаток: ${item.quantity}</span>
+          <span class="w-20 text-right text-xs ${deficit > 0 ? 'text-error font-bold' : 'text-secondary'}">Глаженое: ${item.qty_clean_ironed || 0}</span>
         </div>
       </div>
     `;
@@ -557,12 +596,17 @@ function renderLaundry() {
 
 // Быстрое обновление остатка на складе
 let stockUpdateTimeout = null;
-function updateSingleStock(itemName, value) {
+function updateSingleStock(itemName, fieldName, value) {
   const qty = parseInt(value) || 0;
   
   // Обновляем локальное состояние
   const item = state.laundry.stock.find(i => i.item_name === itemName);
-  if (item) item.quantity = qty;
+  if (item) {
+    item[fieldName] = qty;
+    if (fieldName === 'qty_clean_ironed') {
+      item.quantity = qty;
+    }
+  }
 
   // Показываем статус сохранения
   document.getElementById('laundry-edit-status').innerText = 'Сохранение...';
@@ -571,7 +615,12 @@ function updateSingleStock(itemName, value) {
   clearTimeout(stockUpdateTimeout);
   stockUpdateTimeout = setTimeout(async () => {
     try {
-      const stockArray = state.laundry.stock.map(s => ({ item_name: s.item_name, quantity: s.quantity }));
+      const stockArray = state.laundry.stock.map(s => ({ 
+        item_name: s.item_name, 
+        qty_clean_ironed: s.qty_clean_ironed || 0,
+        qty_clean_unironed: s.qty_clean_unironed || 0,
+        qty_dirty: s.qty_dirty || 0
+      }));
       await fetch(`${apiBaseUrl}/laundry/stock`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -1764,13 +1813,21 @@ async function addLaundryCategory(event) {
   event.preventDefault();
   const name = document.getElementById('add-laundry-name').value.trim().toLowerCase();
   const display = document.getElementById('add-laundry-display').value.trim();
-  const qty = parseInt(document.getElementById('add-laundry-qty').value) || 0;
+  const qty_ironed = parseInt(document.getElementById('add-laundry-qty-ironed').value) || 0;
+  const qty_unironed = parseInt(document.getElementById('add-laundry-qty-unironed').value) || 0;
+  const qty_dirty = parseInt(document.getElementById('add-laundry-qty-dirty').value) || 0;
 
   try {
     const res = await fetch(`${apiBaseUrl}/laundry`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ item_name: name, display_name: display, quantity: qty })
+      body: JSON.stringify({ 
+        item_name: name, 
+        display_name: display, 
+        qty_clean_ironed: qty_ironed, 
+        qty_clean_unironed: qty_unironed, 
+        qty_dirty: qty_dirty 
+      })
     });
     if (res.ok) {
       document.getElementById('add-laundry-form').reset();
@@ -1798,5 +1855,47 @@ async function deleteLaundryCategory(itemName) {
     }
   } catch (e) {
     console.error('Error deleting laundry category:', e);
+  }
+}
+
+// Быстрое действие: постирать белье (dirty -> clean_unironed)
+async function washLinen(itemName) {
+  const input = document.getElementById(`wash-qty-${itemName}`);
+  const qty = parseInt(input.value) || 0;
+  if (qty <= 0) return;
+
+  try {
+    const res = await fetch(`${apiBaseUrl}/laundry/${itemName}/wash`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ quantity: qty })
+    });
+    if (res.ok) {
+      fetchLaundry();
+      if (tg) tg.HapticFeedback.notificationOccurred('success');
+    }
+  } catch (e) {
+    console.error('Error washing linen:', e);
+  }
+}
+
+// Быстрое действие: погладить белье (clean_unironed -> clean_ironed)
+async function ironLinen(itemName) {
+  const input = document.getElementById(`iron-qty-${itemName}`);
+  const qty = parseInt(input.value) || 0;
+  if (qty <= 0) return;
+
+  try {
+    const res = await fetch(`${apiBaseUrl}/laundry/${itemName}/iron`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ quantity: qty })
+    });
+    if (res.ok) {
+      fetchLaundry();
+      if (tg) tg.HapticFeedback.notificationOccurred('success');
+    }
+  } catch (e) {
+    console.error('Error ironing linen:', e);
   }
 }
