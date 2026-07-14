@@ -168,11 +168,25 @@ async function startServer() {
   // 1.4 Назначение плана уборки и горничной для домика
   app.put('/api/cottages/:number/assignment', async (req, res) => {
     const { number } = req.params;
-    const { type, maid_id, priority, status } = req.body;
+    const { type, maid_id, priority, status, check_in_date, check_out_date, early_check_in, late_check_out } = req.body;
     try {
       await run(
-        'UPDATE cottages SET type = ?, maid_id = ?, priority = ?, status = ? WHERE number = ?',
-        [type, maid_id || null, priority, status, number]
+        `UPDATE cottages 
+         SET type = ?, maid_id = ?, priority = ?, status = ?, 
+             check_in_date = ?, check_out_date = ?, 
+             early_check_in = ?, late_check_out = ? 
+         WHERE number = ?`,
+        [
+          type, 
+          maid_id || null, 
+          priority, 
+          status, 
+          check_in_date || null, 
+          check_out_date || null, 
+          early_check_in ? 1 : 0, 
+          late_check_out ? 1 : 0, 
+          number
+        ]
       );
       res.json({ success: true, number });
     } catch (e) {

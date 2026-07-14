@@ -124,6 +124,10 @@ async function createTables() {
       beds_elastic INTEGER DEFAULT 0,
       stay_over_full INTEGER DEFAULT 0,
       laundry_config TEXT,
+      check_in_date TEXT,
+      check_out_date TEXT,
+      early_check_in INTEGER DEFAULT 0,
+      late_check_out INTEGER DEFAULT 0,
       maid_id TEXT,
       checklist TEXT,
       checklist_done TEXT,
@@ -250,8 +254,8 @@ async function seedInitialData() {
       params.push(laundryConfigStr);
 
       await run(`
-        INSERT INTO cottages (number, name, type, priority, status, beds_big, beds_medium, beds_small, beds_elastic, stay_over_full, maid_id, checklist, checklist_done, maid_comment, rating_score, rating_comment, laundry_config)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO cottages (number, name, type, priority, status, beds_big, beds_medium, beds_small, beds_elastic, stay_over_full, check_in_date, check_out_date, early_check_in, late_check_out, maid_id, checklist, checklist_done, maid_comment, rating_score, rating_comment, laundry_config)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, null, null, 0, 0, ?, ?, ?, ?, ?, ?, ?)
       `, params);
     }
   }

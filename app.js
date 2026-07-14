@@ -405,6 +405,57 @@ function renderCottages() {
          </span>`
       : `<span class="bg-surface-container-highest text-on-surface-variant font-semibold text-[10px] px-2 py-0.5 rounded-full">Планово</span>`;
 
+    // Вычисляем предупреждающие плашки заезда/выезда
+    const todayStr = new Date().toLocaleDateString('sv-SE');
+    let warningBadges = '';
+
+    if (c.check_in_date) {
+      if (c.check_in_date === todayStr) {
+        warningBadges += `
+          <span class="bg-emerald-100 text-emerald-800 border border-emerald-300 font-extrabold text-[9px] px-2 py-0.5 rounded-full flex items-center gap-0.5">
+            <span class="material-symbols-outlined text-[12px]">login</span>ЗАЕЗД СЕГОДНЯ
+          </span>
+        `;
+      } else {
+        const checkinFmt = new Date(c.check_in_date).toLocaleDateString('ru-RU', { month: 'short', day: 'numeric' });
+        warningBadges += `
+          <span class="bg-slate-100 text-slate-700 font-semibold text-[9px] px-2 py-0.5 rounded-full flex items-center gap-0.5">
+            <span class="material-symbols-outlined text-[12px]">login</span>Заезд: ${checkinFmt}
+          </span>
+        `;
+      }
+    }
+    if (c.check_out_date) {
+      if (c.check_out_date === todayStr) {
+        warningBadges += `
+          <span class="bg-red-100 text-red-800 border border-red-300 font-extrabold text-[9px] px-2 py-0.5 rounded-full flex items-center gap-0.5">
+            <span class="material-symbols-outlined text-[12px]">logout</span>ВЫЕЗД СЕГОДНЯ ⚠️
+          </span>
+        `;
+      } else {
+        const checkoutFmt = new Date(c.check_out_date).toLocaleDateString('ru-RU', { month: 'short', day: 'numeric' });
+        warningBadges += `
+          <span class="bg-slate-100 text-slate-700 font-semibold text-[9px] px-2 py-0.5 rounded-full flex items-center gap-0.5">
+            <span class="material-symbols-outlined text-[12px]">logout</span>Выезд: ${checkoutFmt}
+          </span>
+        `;
+      }
+    }
+    if (c.early_check_in === 1) {
+      warningBadges += `
+        <span class="bg-amber-100 text-amber-800 border border-amber-300 font-extrabold text-[9px] px-2 py-0.5 rounded-full flex items-center gap-0.5">
+          <span class="material-symbols-outlined text-[12px]">bolt</span>Ранний заезд
+        </span>
+      `;
+    }
+    if (c.late_check_out === 1) {
+      warningBadges += `
+        <span class="bg-indigo-100 text-indigo-800 border border-indigo-300 font-extrabold text-[9px] px-2 py-0.5 rounded-full flex items-center gap-0.5">
+          <span class="material-symbols-outlined text-[12px]">schedule</span>Поздний выезд
+        </span>
+      `;
+    }
+
     // Текст кнопки действия
     let ctaButton = '';
     if (state.currentRole === 'supervisor') {
@@ -444,6 +495,7 @@ function renderCottages() {
           <div>
             <h3 class="font-bold text-lg text-primary">${c.name} (№${c.number})</h3>
             <p class="text-xs text-on-surface-variant mt-0.5">${c.type.toUpperCase()}</p>
+            ${warningBadges ? `<div class="flex flex-wrap gap-xs mt-xs">${warningBadges}</div>` : ''}
           </div>
           <div class="flex flex-col items-end gap-xs">
             ${priorityBadge}
@@ -1526,7 +1578,7 @@ function renderPlanAdmin() {
   if (state.cottages.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="5" class="p-md text-center text-on-surface-variant text-xs">Нет домиков в системе</td>
+        <td colspan="6" class="p-md text-center text-on-surface-variant text-xs">Нет домиков в системе</td>
       </tr>
     `;
     return;
@@ -1542,7 +1594,7 @@ function renderPlanAdmin() {
       { val: 'промежуточная', label: 'Промежуточная' }
     ];
     
-    let typeSelect = `<select id="plan-type-${c.number}" onchange="updatePlanItem(${c.number}, this.value, document.getElementById('plan-maid-${c.number}').value, document.getElementById('plan-pri-${c.number}').value, '${c.status}')" class="bg-surface-container-low border rounded-xl px-2 py-1 text-xs focus:outline-none">`;
+    let typeSelect = `<select id="plan-type-${c.number}" onchange="triggerUpdatePlanItem(${c.number})" class="bg-surface-container-low border rounded-xl px-2 py-1 text-xs focus:outline-none">`;
     types.forEach(t => {
       const selected = c.type === t.val ? 'selected' : '';
       typeSelect += `<option value="${t.val}" ${selected}>${t.label}</option>`;
@@ -1550,13 +1602,34 @@ function renderPlanAdmin() {
     typeSelect += `</select>`;
 
     // Dropdown для горничных
-    let maidSelect = `<select id="plan-maid-${c.number}" onchange="updatePlanItem(${c.number}, document.getElementById('plan-type-${c.number}').value, this.value, document.getElementById('plan-pri-${c.number}').value, '${c.status}')" class="bg-surface-container-low border rounded-xl px-2 py-1 text-xs focus:outline-none">`;
+    let maidSelect = `<select id="plan-maid-${c.number}" onchange="triggerUpdatePlanItem(${c.number})" class="bg-surface-container-low border rounded-xl px-2 py-1 text-xs focus:outline-none">`;
     maidSelect += `<option value="">-- Не назначена --</option>`;
     state.maids.forEach(m => {
       const selected = c.maid_id === m.id.toString() ? 'selected' : '';
       maidSelect += `<option value="${m.id}" ${selected}>${m.name}</option>`;
     });
     maidSelect += `</select>`;
+
+    // Колонки дат и чекбоксов
+    const checkin = c.check_in_date || '';
+    const checkout = c.check_out_date || '';
+    const early = c.early_check_in === 1 ? 'checked' : '';
+    const late = c.late_check_out === 1 ? 'checked' : '';
+
+    const datesHtml = `
+      <div class="flex flex-col gap-xs py-1">
+        <div class="flex items-center gap-xs">
+          <span class="text-[10px] text-on-surface-variant font-bold w-10">Заезд:</span>
+          <input type="date" id="plan-checkin-${c.number}" value="${checkin}" onchange="triggerUpdatePlanItem(${c.number})" class="bg-surface-container-low border rounded-xl px-2 py-0.5 text-[10px] focus:outline-none"/>
+          <label class="flex items-center gap-0.5 text-[9px] text-on-surface-variant font-semibold cursor-pointer"><input type="checkbox" id="plan-early-${c.number}" ${early} onchange="triggerUpdatePlanItem(${c.number})" class="rounded text-primary focus:ring-primary text-[10px]"/> Ранний</label>
+        </div>
+        <div class="flex items-center gap-xs">
+          <span class="text-[10px] text-on-surface-variant font-bold w-10">Выезд:</span>
+          <input type="date" id="plan-checkout-${c.number}" value="${checkout}" onchange="triggerUpdatePlanItem(${c.number})" class="bg-surface-container-low border rounded-xl px-2 py-0.5 text-[10px] focus:outline-none"/>
+          <label class="flex items-center gap-0.5 text-[9px] text-on-surface-variant font-semibold cursor-pointer"><input type="checkbox" id="plan-late-${c.number}" ${late} onchange="triggerUpdatePlanItem(${c.number})" class="rounded text-primary focus:ring-primary text-[10px]"/> Поздний</label>
+        </div>
+      </div>
+    `;
 
     // Статус
     let statusText = 'Свободен';
@@ -1570,9 +1643,10 @@ function renderPlanAdmin() {
         <td class="p-md font-bold text-primary">${c.name}</td>
         <td class="p-md">${typeSelect}</td>
         <td class="p-md">${maidSelect}</td>
+        <td class="p-md">${datesHtml}</td>
         <td class="p-md">
           <input type="number" id="plan-pri-${c.number}" min="1" max="100" value="${c.priority || c.number}" 
-            onchange="updatePlanItem(${c.number}, document.getElementById('plan-type-${c.number}').value, document.getElementById('plan-maid-${c.number}').value, this.value, '${c.status}')"
+            onchange="triggerUpdatePlanItem(${c.number})"
             class="w-16 bg-surface-container-low border rounded-xl px-2 py-1 text-xs text-center focus:outline-none" />
         </td>
         <td class="p-md">
@@ -1584,8 +1658,24 @@ function renderPlanAdmin() {
   tbody.innerHTML = html;
 }
 
+// Триггер сохранения изменений одной посылкой на сервер
+async function triggerUpdatePlanItem(number) {
+  const type = document.getElementById(`plan-type-${number}`).value;
+  const maidId = document.getElementById(`plan-maid-${number}`).value;
+  const priority = parseInt(document.getElementById(`plan-pri-${number}`).value) || number;
+  const check_in_date = document.getElementById(`plan-checkin-${number}`).value || null;
+  const check_out_date = document.getElementById(`plan-checkout-${number}`).value || null;
+  const early_check_in = document.getElementById(`plan-early-${number}`).checked ? 1 : 0;
+  const late_check_out = document.getElementById(`plan-late-${number}`).checked ? 1 : 0;
+
+  const cottage = state.cottages.find(c => c.number === number);
+  const currentStatus = cottage ? cottage.status : 'green';
+
+  await updatePlanItem(number, type, maidId, priority, currentStatus, check_in_date, check_out_date, early_check_in, late_check_out);
+}
+
 // Сохранить изменения планирования уборок
-async function updatePlanItem(number, type, maidId, priority, currentStatus) {
+async function updatePlanItem(number, type, maidId, priority, currentStatus, checkInDate = null, checkOutDate = null, earlyCheckIn = 0, lateCheckOut = 0) {
   let newStatus = currentStatus;
   if (type === 'уборка не требуется') {
     newStatus = 'green';
@@ -1597,7 +1687,16 @@ async function updatePlanItem(number, type, maidId, priority, currentStatus) {
     const res = await fetch(`${apiBaseUrl}/cottages/${number}/assignment`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type, maid_id: maidId, priority: parseInt(priority) || number, status: newStatus })
+      body: JSON.stringify({ 
+        type, 
+        maid_id: maidId, 
+        priority: parseInt(priority) || number, 
+        status: newStatus,
+        check_in_date: checkInDate,
+        check_out_date: checkOutDate,
+        early_check_in: earlyCheckIn,
+        late_check_out: lateCheckOut
+      })
     });
     if (res.ok) {
       await fetchCottages();
