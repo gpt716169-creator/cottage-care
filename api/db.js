@@ -26,12 +26,22 @@ export async function initDb() {
   if (isProduction) {
     dbType = 'postgres';
     console.log('Connecting to PostgreSQL database...');
-    const pool = new pg.Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false }
-    });
-    dbInstance = pool;
-  } else {
+    try {
+      const pool = new pg.Pool({
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false }
+      });
+      // Тестовый запрос для проверки соединения
+      await pool.query('SELECT 1');
+      dbInstance = pool;
+      console.log('PostgreSQL connection established successfully.');
+    } catch (e) {
+      console.warn('PostgreSQL connection failed. Falling back to SQLite local database. Error:', e.message);
+      dbType = 'sqlite';
+    }
+  }
+
+  if (!isProduction || dbType === 'sqlite') {
     dbType = 'sqlite';
     console.log('Connecting to SQLite database...');
     const dbPath = path.resolve('db.sqlite3');

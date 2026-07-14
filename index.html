@@ -108,29 +108,33 @@
             </div>
         </div>
         <nav class="flex-1 space-y-1 px-sm">
-            <button onclick="switchTab('cleaning')" data-tab="cleaning" class="w-full text-left font-semibold rounded-full px-4 h-12 flex items-center gap-md transition-all text-on-surface-variant hover:bg-surface-container-highest">
+            <button onclick="switchTab('cleaning')" data-tab="cleaning" id="nav-cleaning" class="w-full text-left font-semibold rounded-full px-4 h-12 flex items-center gap-md transition-all text-on-surface-variant hover:bg-surface-container-highest">
                 <span class="material-symbols-outlined">cleaning_services</span>
                 <span>План уборок</span>
             </button>
-            <button onclick="switchTab('laundry')" data-tab="laundry" class="w-full text-left font-semibold rounded-full px-4 h-12 flex items-center gap-md transition-all text-on-surface-variant hover:bg-surface-container-highest">
+            <button onclick="switchTab('laundry')" data-tab="laundry" id="nav-laundry" class="w-full text-left font-semibold rounded-full px-4 h-12 flex items-center gap-md transition-all text-on-surface-variant hover:bg-surface-container-highest">
                 <span class="material-symbols-outlined">local_laundry_service</span>
                 <span>Учет белья</span>
             </button>
-            <button onclick="switchTab('requests')" data-tab="requests" class="w-full text-left font-semibold rounded-full px-4 h-12 flex items-center gap-md transition-all text-on-surface-variant hover:bg-surface-container-highest">
+            <button onclick="switchTab('requests')" data-tab="requests" id="nav-requests" class="w-full text-left font-semibold rounded-full px-4 h-12 flex items-center gap-md transition-all text-on-surface-variant hover:bg-surface-container-highest">
                 <span class="material-symbols-outlined">priority_high</span>
                 <span>Заявки</span>
             </button>
-            <button onclick="switchTab('reports')" data-tab="reports" class="w-full text-left font-semibold rounded-full px-4 h-12 flex items-center gap-md transition-all text-on-surface-variant hover:bg-surface-container-highest">
+            <button onclick="switchTab('reports')" data-tab="reports" id="nav-reports" class="w-full text-left font-semibold rounded-full px-4 h-12 flex items-center gap-md transition-all text-on-surface-variant hover:bg-surface-container-highest">
                 <span class="material-symbols-outlined">assessment</span>
                 <span>Отчеты качества</span>
             </button>
-            <button onclick="switchTab('purchases')" data-tab="purchases" class="w-full text-left font-semibold rounded-full px-4 h-12 flex items-center gap-md transition-all text-on-surface-variant hover:bg-surface-container-highest">
+            <button onclick="switchTab('purchases')" data-tab="purchases" id="nav-purchases" class="w-full text-left font-semibold rounded-full px-4 h-12 flex items-center gap-md transition-all text-on-surface-variant hover:bg-surface-container-highest">
                 <span class="material-symbols-outlined">shopping_cart</span>
                 <span>Закупки</span>
             </button>
-            <button onclick="switchTab('map')" data-tab="map" class="w-full text-left font-semibold rounded-full px-4 h-12 flex items-center gap-md transition-all text-on-surface-variant hover:bg-surface-container-highest">
+            <button onclick="switchTab('map')" data-tab="map" id="nav-map" class="w-full text-left font-semibold rounded-full px-4 h-12 flex items-center gap-md transition-all text-on-surface-variant hover:bg-surface-container-highest">
                 <span class="material-symbols-outlined">map</span>
                 <span>Карта территории</span>
+            </button>
+            <button onclick="switchTab('admin')" data-tab="admin" id="nav-admin" class="w-full text-left font-semibold rounded-full px-4 h-12 flex items-center gap-md transition-all text-on-surface-variant hover:bg-surface-container-highest">
+                <span class="material-symbols-outlined">settings</span>
+                <span>Настройки/Админ</span>
             </button>
         </nav>
         <!-- Role toggle in desktop footer -->
@@ -192,11 +196,19 @@
                 </div>
 
                 <!-- Maid banner (Maid Only) -->
-                <div id="maid-banner" class="hidden bg-secondary-container/40 p-lg rounded-xl border border-secondary-container/60 flex items-center gap-md">
-                    <span class="material-symbols-outlined text-[36px] text-secondary">assignment_ind</span>
-                    <div>
-                        <h4 class="font-bold text-primary">Кабинет Горничной</h4>
-                        <p class="text-sm text-on-surface-variant">Ниже показаны назначенные вам домики. Отмечайте шаги уборки по чек-листу.</p>
+                <div id="maid-banner" class="hidden bg-secondary-container/40 p-lg rounded-xl border border-secondary-container/60 flex flex-col sm:flex-row sm:items-center justify-between gap-md">
+                    <div class="flex items-center gap-md">
+                        <span class="material-symbols-outlined text-[36px] text-secondary">assignment_ind</span>
+                        <div>
+                            <h4 class="font-bold text-primary">Кабинет Горничной</h4>
+                            <p class="text-sm text-on-surface-variant">Отмечайте шаги уборки по чек-листу.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-sm">
+                        <label class="text-xs font-bold text-primary whitespace-nowrap">Кто убирает:</label>
+                        <select id="maid-user-select" onchange="onMaidUserChange()" class="bg-white border border-outline-variant/30 rounded-xl px-3 py-1.5 text-xs font-semibold focus:outline-none shadow-sm">
+                            <!-- Populated dynamically -->
+                        </select>
                     </div>
                 </div>
 
@@ -563,6 +575,158 @@
                     </div>
                 </div>
             </section>
+
+            <!-- TAB 7: Admin Panel -->
+            <section id="tab-admin" class="hidden space-y-md">
+                <!-- Subtab Navigation -->
+                <div class="flex items-center gap-lg mb-md border-b border-outline-variant/20">
+                    <button class="pb-sm font-bold text-sm transition-colors border-b-2 border-primary text-primary" id="admin-subtab-plan" onclick="switchAdminSubtab('plan')">
+                        Планирование уборок
+                    </button>
+                    <button class="pb-sm font-semibold text-sm transition-colors text-on-surface-variant hover:text-on-surface" id="admin-subtab-maids" onclick="switchAdminSubtab('maids')">
+                        Персонал (Горничные)
+                    </button>
+                    <button class="pb-sm font-semibold text-sm transition-colors text-on-surface-variant hover:text-on-surface" id="admin-subtab-cottages" onclick="switchAdminSubtab('cottages')">
+                        Редактор домиков
+                    </button>
+                </div>
+
+                <!-- Admin Subtab: Plan -->
+                <div id="admin-content-plan" class="space-y-md">
+                    <div class="bg-white rounded-xl border border-outline-variant/10 shadow-sm p-lg">
+                        <h3 class="font-bold text-primary text-lg mb-md">Дневной план и назначение горничных</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-surface-container-low text-on-surface-variant font-semibold text-xs border-b">
+                                    <tr>
+                                        <th class="p-md">Домик</th>
+                                        <th class="p-md">Тип уборки</th>
+                                        <th class="p-md">Назначенная горничная</th>
+                                        <th class="p-md">Приоритет</th>
+                                        <th class="p-md">Статус</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-plan-table-body">
+                                    <!-- Loaded dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Subtab: Maids -->
+                <div id="admin-content-maids" class="hidden space-y-md">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-md">
+                        <!-- Add Maid Form -->
+                        <div class="bg-white p-lg rounded-xl border border-outline-variant/10 shadow-sm md:col-span-1 h-fit">
+                            <h3 class="font-bold text-primary text-base mb-md">Добавить сотрудника</h3>
+                            <form id="add-maid-form" onsubmit="addNewMaid(event)" class="space-y-sm">
+                                <div>
+                                    <label class="block text-xs font-semibold text-on-surface-variant mb-xs">ФИО горничной</label>
+                                    <input id="add-maid-name" type="text" required placeholder="Мария Иванова" class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-md py-2 text-sm focus:outline-none"/>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-on-surface-variant mb-xs">Telegram Username</label>
+                                    <input id="add-maid-tg" type="text" placeholder="maria_clean" class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-md py-2 text-sm focus:outline-none"/>
+                                </div>
+                                <button type="submit" class="w-full h-10 bg-primary text-white rounded-xl font-bold active:scale-95 transition-all text-xs">
+                                    Добавить сотрудника
+                                </button>
+                            </form>
+                        </div>
+                        <!-- Maids List -->
+                        <div class="bg-white p-lg rounded-xl border border-outline-variant/10 shadow-sm md:col-span-2">
+                            <h3 class="font-bold text-primary text-base mb-md">Список персонала</h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-sm">
+                                    <thead class="bg-surface-container-low text-on-surface-variant font-semibold text-xs border-b">
+                                        <tr>
+                                            <th class="p-md">Имя</th>
+                                            <th class="p-md">Telegram</th>
+                                            <th class="p-md text-right">Действие</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-maids-table-body">
+                                        <!-- Loaded dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Subtab: Cottages Editor -->
+                <div id="admin-content-cottages" class="hidden space-y-md">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-md">
+                        <!-- Add Cottage Form -->
+                        <div class="bg-white p-lg rounded-xl border border-outline-variant/10 shadow-sm md:col-span-1 h-fit">
+                            <h3 class="font-bold text-primary text-base mb-md" id="cottage-form-title">Добавить домик</h3>
+                            <form id="add-cottage-form" onsubmit="saveCottageConfig(event)" class="space-y-sm">
+                                <input type="hidden" id="edit-cottage-mode" value="create"/>
+                                <div>
+                                    <label class="block text-xs font-semibold text-on-surface-variant mb-xs">Номер домика</label>
+                                    <input id="add-cottage-number" type="number" required placeholder="24" class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-md py-2 text-sm focus:outline-none"/>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-on-surface-variant mb-xs">Название домика</label>
+                                    <input id="add-cottage-name" type="text" required placeholder="Домик 24" class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-md py-2 text-sm focus:outline-none"/>
+                                </div>
+                                <div class="grid grid-cols-3 gap-xs">
+                                    <div>
+                                        <label class="block text-[10px] font-semibold text-on-surface-variant mb-xs">Кр. Бол.</label>
+                                        <input id="add-cottage-beds-big" type="number" required min="0" value="1" class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-2 py-2 text-sm focus:outline-none"/>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-semibold text-on-surface-variant mb-xs">Кр. Сред.</label>
+                                        <input id="add-cottage-beds-med" type="number" required min="0" value="0" class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-2 py-2 text-sm focus:outline-none"/>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-semibold text-on-surface-variant mb-xs">Кр. Мал.</label>
+                                        <input id="add-cottage-beds-small" type="number" required min="0" value="2" class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-2 py-2 text-sm focus:outline-none"/>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-sm pt-xs">
+                                    <div>
+                                        <label class="block text-[10px] font-semibold text-on-surface-variant mb-xs">На резинке</label>
+                                        <input id="add-cottage-beds-elastic" type="number" required min="0" value="1" class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-2 py-2 text-sm focus:outline-none"/>
+                                    </div>
+                                    <div class="flex items-center gap-xs h-full pt-4">
+                                        <input id="add-cottage-stayover-full" type="checkbox" checked class="rounded text-primary focus:ring-primary"/>
+                                        <label class="text-[10px] font-semibold text-on-surface-variant cursor-pointer" for="add-cottage-stayover-full">Смена белья при прожив.</label>
+                                    </div>
+                                </div>
+                                <div class="flex gap-xs pt-sm">
+                                    <button type="submit" class="flex-1 h-10 bg-primary text-white rounded-xl font-bold active:scale-95 transition-all text-xs">
+                                        Сохранить
+                                    </button>
+                                    <button type="button" onclick="resetCottageForm()" class="h-10 border border-outline-variant/30 px-md rounded-xl text-xs font-semibold hover:bg-slate-50">
+                                        Сбросить
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        <!-- Cottages List -->
+                        <div class="bg-white p-lg rounded-xl border border-outline-variant/10 shadow-sm md:col-span-2">
+                            <h3 class="font-bold text-primary text-base mb-md">Список всех домиков</h3>
+                            <div class="overflow-x-auto max-h-[450px] no-scrollbar">
+                                <table class="w-full text-left text-sm">
+                                    <thead class="bg-surface-container-low text-on-surface-variant font-semibold text-xs border-b sticky top-0 z-10">
+                                        <tr>
+                                            <th class="p-md">Номер</th>
+                                            <th class="p-md">Название</th>
+                                            <th class="p-md">Кровати (Б/С/М)</th>
+                                            <th class="p-md text-right">Действия</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-cottages-table-body">
+                                        <!-- Loaded dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </div>
     </main>
 
@@ -576,26 +740,30 @@
 
     <!-- Bottom Navigation Bar (Mobile Only) -->
     <nav class="md:hidden fixed bottom-0 left-0 w-full z-50 h-16 bg-white border-t border-outline-variant/10 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] flex justify-around items-center w-full pb-safe">
-        <button onclick="switchTab('cleaning')" data-mobile-tab="cleaning" class="flex flex-col items-center justify-center text-primary-container px-3 py-1">
+        <button onclick="switchTab('cleaning')" data-mobile-tab="cleaning" id="mob-nav-cleaning" class="flex flex-col items-center justify-center text-primary px-3 py-1">
             <span class="material-symbols-outlined">cleaning_services</span>
             <span class="text-[10px] font-semibold">Уборки</span>
         </button>
-        <button onclick="switchTab('laundry')" data-mobile-tab="laundry" class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all px-3 py-1">
+        <button onclick="switchTab('laundry')" data-mobile-tab="laundry" id="mob-nav-laundry" class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all px-3 py-1">
             <span class="material-symbols-outlined">local_laundry_service</span>
             <span class="text-[10px] font-semibold">Белье</span>
         </button>
-        <button onclick="switchTab('requests')" data-mobile-tab="requests" class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all px-3 py-1 relative">
+        <button onclick="switchTab('requests')" data-mobile-tab="requests" id="mob-nav-requests" class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all px-3 py-1 relative">
             <span class="material-symbols-outlined">priority_high</span>
             <span class="text-[10px] font-semibold">Заявки</span>
             <span id="requests-badge-bubble" class="hidden absolute top-0.5 right-3 w-4 h-4 bg-error text-white text-[9px] rounded-full flex items-center justify-center font-bold">0</span>
         </button>
-        <button onclick="switchTab('reports')" data-mobile-tab="reports" class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all px-3 py-1">
+        <button onclick="switchTab('reports')" data-mobile-tab="reports" id="mob-nav-reports" class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all px-3 py-1">
             <span class="material-symbols-outlined">assessment</span>
             <span class="text-[10px] font-semibold">Отчеты</span>
         </button>
-        <button onclick="switchTab('map')" data-mobile-tab="map" class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all px-3 py-1">
+        <button onclick="switchTab('map')" data-mobile-tab="map" id="mob-nav-map" class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all px-3 py-1">
             <span class="material-symbols-outlined">map</span>
             <span class="text-[10px] font-semibold">Карта</span>
+        </button>
+        <button onclick="switchTab('admin')" data-mobile-tab="admin" id="mob-nav-admin" class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary transition-all px-3 py-1">
+            <span class="material-symbols-outlined">settings</span>
+            <span class="text-[10px] font-semibold">Админ</span>
         </button>
     </nav>
 

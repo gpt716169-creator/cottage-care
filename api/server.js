@@ -122,6 +122,97 @@ async function startServer() {
     }
   });
 
+  // 1.1 Добавить новый домик в редакторе
+  app.post('/api/cottages', async (req, res) => {
+    const { number, name, beds_big, beds_medium, beds_small, beds_elastic, stay_over_full } = req.body;
+    const defaultChecklist = JSON.stringify(["Пыль","Постельное белье","Вынос мусора","Полотенца"]);
+    try {
+      await run(
+        `INSERT INTO cottages (number, name, type, priority, status, beds_big, beds_medium, beds_small, beds_elastic, stay_over_full, checklist, checklist_done, maid_comment)
+         VALUES (?, ?, 'уборка не требуется', ?, 'green', ?, ?, ?, ?, ?, ?, '[]', '')`,
+        [number, name, number, beds_big, beds_medium, beds_small, beds_elastic, stay_over_full, defaultChecklist]
+      );
+      res.json({ success: true, number });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  // 1.2 Изменить конфигурацию домика
+  app.put('/api/cottages/:number/config', async (req, res) => {
+    const { number } = req.params;
+    const { name, beds_big, beds_medium, beds_small, beds_elastic, stay_over_full } = req.body;
+    try {
+      await run(
+        `UPDATE cottages SET name = ?, beds_big = ?, beds_medium = ?, beds_small = ?, beds_elastic = ?, stay_over_full = ? 
+         WHERE number = ?`,
+        [name, beds_big, beds_medium, beds_small, beds_elastic, stay_over_full, number]
+      );
+      res.json({ success: true, number });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  // 1.3 Удалить домик
+  app.delete('/api/cottages/:number', async (req, res) => {
+    const { number } = req.params;
+    try {
+      await run('DELETE FROM cottages WHERE number = ?', [number]);
+      res.json({ success: true, number });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  // 1.4 Назначение плана уборки и горничной для домика
+  app.put('/api/cottages/:number/assignment', async (req, res) => {
+    const { number } = req.params;
+    const { type, maid_id, priority, status } = req.body;
+    try {
+      await run(
+        'UPDATE cottages SET type = ?, maid_id = ?, priority = ?, status = ? WHERE number = ?',
+        [type, maid_id || null, priority, status, number]
+      );
+      res.json({ success: true, number });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  // Персонал (Горничные) API
+  // 1. Получить список горничных
+  app.get('/api/maids', async (req, res) => {
+    try {
+      const maids = await query('SELECT * FROM maids ORDER BY name ASC');
+      res.json(maids);
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  // 2. Добавить горничную
+  app.post('/api/maids', async (req, res) => {
+    const { name, telegram_username } = req.body;
+    try {
+      const result = await run('INSERT INTO maids (name, telegram_username) VALUES (?, ?)', [name, telegram_username || '']);
+      res.json({ success: true, id: result.lastInsertId, name, telegram_username });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  // 3. Удалить горничную
+  app.delete('/api/maids/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+      await run('DELETE FROM maids WHERE id = ?', [id]);
+      res.json({ success: true, id });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   // 2. Обновить статус домика
   app.put('/api/cottages/:number/status', async (req, res) => {
     const { number } = req.params;

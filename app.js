@@ -7,6 +7,8 @@ let state = {
   currentTab: 'cleaning',
   currentRole: 'supervisor', // 'supervisor' | 'maid'
   cottages: [],
+  maids: [],
+  selectedMaidId: 'all',
   laundry: { stock: [], needsToday: {}, needsTomorrow: {} },
   requests: [],
   reports: { reviews: [], stats: { total_cleanings: 0, avg_score: 5.0 }, commonIssues: [] },
@@ -15,7 +17,8 @@ let state = {
   selectedRating: 5,
   requestSubtab: 'urgent',
   filterType: 'all',
-  searchQuery: ''
+  searchQuery: '',
+  adminSubtab: 'plan'
 };
 
 // Инициализация Telegram WebApp SDK
@@ -41,6 +44,12 @@ document.addEventListener('DOMContentLoaded', () => {
   if (savedRole) {
     state.currentRole = savedRole;
   }
+  
+  const savedMaidId = localStorage.getItem('cottage_care_selected_maid_id');
+  if (savedMaidId) {
+    state.selectedMaidId = savedMaidId;
+  }
+  
   updateRoleUI();
 
   // Первичный запуск
@@ -56,7 +65,7 @@ function switchTab(tabId) {
   state.currentTab = tabId;
   
   // Скрываем все секции вкладок
-  const sections = ['tab-cleaning', 'tab-laundry', 'tab-requests', 'tab-reports', 'tab-purchases', 'tab-map'];
+  const sections = ['tab-cleaning', 'tab-laundry', 'tab-requests', 'tab-reports', 'tab-purchases', 'tab-map', 'tab-admin'];
   sections.forEach(s => {
     const el = document.getElementById(s);
     if (el) el.classList.add('hidden');
@@ -73,13 +82,20 @@ function switchTab(tabId) {
     requests: 'Технические заявки',
     reports: 'Контроль качества',
     purchases: 'Закупки расходников',
-    map: 'Карта территории'
+    map: 'Карта территории',
+    admin: 'Настройки и Админка'
   };
-  document.getElementById('current-title').innerText = titles[tabId] || 'Cottage Care';
+  const titleEl = document.getElementById('current-title');
+  if (titleEl) titleEl.innerText = titles[tabId] || 'Cottage Care';
 
   // Обновляем активные пункты меню (Desktop)
   document.querySelectorAll('aside nav button').forEach(btn => {
-    const btnTab = btn.getAttribute('onclick').match(/'([^']+)'/)[1];
+    const btnOnClick = btn.getAttribute('onclick');
+    if (!btnOnClick) return;
+    const match = btnOnClick.match(/'([^']+)'/);
+    if (!match) return;
+    const btnTab = match[1];
+    
     if (btnTab === tabId) {
       btn.classList.add('tab-active-desktop', 'bg-primary-container', 'text-white');
       btn.classList.remove('text-on-surface-variant');
@@ -91,7 +107,12 @@ function switchTab(tabId) {
 
   // Обновляем активные пункты меню (Mobile)
   document.querySelectorAll('nav[class*="md:hidden"] button').forEach(btn => {
-    const btnTab = btn.getAttribute('onclick').match(/'([^']+)'/)[1];
+    const btnOnClick = btn.getAttribute('onclick');
+    if (!btnOnClick) return;
+    const match = btnOnClick.match(/'([^']+)'/);
+    if (!match) return;
+    const btnTab = match[1];
+    
     if (btnTab === tabId) {
       btn.classList.add('tab-active-mobile');
       btn.classList.remove('text-on-surface-variant');
@@ -107,11 +128,13 @@ function switchTab(tabId) {
   if (tabId === 'reports') fetchReports();
   if (tabId === 'purchases') fetchPurchases();
   if (tabId === 'map') updateMapStatus();
+  if (tabId === 'admin') fetchMaids();
 }
 
 // Загрузка всех данных с сервера
 async function refreshData() {
   await fetchCottages();
+  await fetchMaids(); // Загружаем список горничных для селекторов и админки
   if (state.currentTab === 'laundry') await fetchLaundry();
   if (state.currentTab === 'requests') await fetchRequests();
   if (state.currentTab === 'reports') await fetchReports();
@@ -190,14 +213,22 @@ function updateRoleUI() {
   const isSupervisor = state.currentRole === 'supervisor';
   
   // Текст в шапке
-  document.getElementById('header-role-name').innerText = isSupervisor ? 'Супервайзер' : 'Горничная';
+  const headerRole = document.getElementById('header-role-name');
+  if (headerRole) headerRole.innerText = isSupervisor ? 'Супервайзер' : 'Горничная';
   
   // Информация в профиле (Desktop Sidebar)
-  document.getElementById('user-role-badge').innerText = isSupervisor ? 'Супервайзер' : 'Служба уборки';
-  document.getElementById('user-name').innerText = isSupervisor ? 'Анна Ковалева' : 'Мария Иванова';
-  document.getElementById('user-avatar').src = isSupervisor 
-    ? 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=150'
-    : 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150';
+  const userBadge = document.getElementById('user-role-badge');
+  if (userBadge) userBadge.innerText = isSupervisor ? 'Супервайзер' : 'Служба уборки';
+  
+  const userName = document.getElementById('user-name');
+  if (userName) userName.innerText = isSupervisor ? 'Анна Ковалева' : 'Горничная';
+  
+  const userAvatar = document.getElementById('user-avatar');
+  if (userAvatar) {
+    userAvatar.src = isSupervisor 
+      ? 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=150'
+      : 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150';
+  }
 
   // Показ/скрытие блоков для ролей
   const bentoStats = document.getElementById('supervisor-bento-stats');
@@ -213,6 +244,28 @@ function updateRoleUI() {
     if (maidBanner) maidBanner.classList.remove('hidden');
     if (fabContainer) fabContainer.classList.add('hidden'); // У горничных нет FAB добавления заявок (они создают их внутри домика)
   }
+
+  // Показ/скрытие кнопок навигации (Desktop Sidebar и Mobile Bottom Nav)
+  const tabsToToggle = ['laundry', 'reports', 'purchases', 'admin'];
+  tabsToToggle.forEach(tab => {
+    const navBtn = document.getElementById(`nav-${tab}`);
+    const mobBtn = document.getElementById(`mob-nav-${tab}`);
+    if (isSupervisor) {
+      if (navBtn) navBtn.classList.remove('hidden');
+      if (mobBtn) mobBtn.classList.remove('hidden');
+    } else {
+      if (navBtn) navBtn.classList.add('hidden');
+      if (mobBtn) mobBtn.classList.add('hidden');
+    }
+  });
+
+  // Если горничная и активна скрытая вкладка, переключаем её на 'cleaning'
+  if (!isSupervisor && ['laundry', 'reports', 'purchases', 'admin'].includes(state.currentTab)) {
+    switchTab('cleaning');
+  }
+
+  // Заполняем выпадающий список горничных
+  renderMaidUserSelect();
 }
 
 // Обновление статистики панели супервайзера
@@ -255,7 +308,15 @@ function renderCottages() {
 
   let filtered = [...state.cottages];
 
-  // Применяем фильтр типа
+  // Исключаем домики без уборки сегодня
+  filtered = filtered.filter(c => c.type && c.type !== 'уборка не требуется');
+
+  // Если роль горничной - показываем только её домики
+  if (state.currentRole === 'maid' && state.selectedMaidId !== 'all') {
+    filtered = filtered.filter(c => c.maid_id === state.selectedMaidId);
+  }
+
+  // Применяем фильтр типа (все / выезд / промежуточная и т.д.)
   if (state.filterType !== 'all') {
     filtered = filtered.filter(c => c.type === state.filterType);
   }
@@ -1236,5 +1297,346 @@ function openMaidReportFaultModal() {
   closeMaidModal();
   openNewRequestModal(number);
   // Переключаем форму категорий на "ремонт"
-  document.querySelector('input[name="req-category"][value="maintenance"]').checked = true;
+  const repairRadio = document.querySelector('input[name="req-category"][value="maintenance"]');
+  if (repairRadio) repairRadio.checked = true;
+}
+
+// ==================== ADMIN & PLANNING LOGIC ====================
+
+// Получить список горничных
+async function fetchMaids() {
+  try {
+    const res = await fetch(`${apiBaseUrl}/maids`);
+    state.maids = await res.json();
+    renderMaidUserSelect();
+    if (state.currentTab === 'admin') {
+      renderMaidsAdmin();
+      renderPlanAdmin();
+      renderCottagesAdmin();
+    }
+  } catch (e) {
+    console.error('Error fetching maids:', e);
+  }
+}
+
+// Заполнить выпадающий список горничных в баннере
+function renderMaidUserSelect() {
+  const select = document.getElementById('maid-user-select');
+  if (!select) return;
+
+  let html = `<option value="all">-- Все задачи --</option>`;
+  state.maids.forEach(m => {
+    const selected = state.selectedMaidId === m.id.toString() ? 'selected' : '';
+    html += `<option value="${m.id}" ${selected}>${m.name}</option>`;
+  });
+  select.innerHTML = html;
+}
+
+// Обработчик выбора горничной в баннере
+function onMaidUserChange() {
+  const select = document.getElementById('maid-user-select');
+  if (!select) return;
+  state.selectedMaidId = select.value;
+  localStorage.setItem('cottage_care_selected_maid_id', state.selectedMaidId);
+  renderCottages();
+}
+
+// Добавить сотрудника
+async function addNewMaid(event) {
+  event.preventDefault();
+  const name = document.getElementById('add-maid-name').value.trim();
+  const telegram_username = document.getElementById('add-maid-tg').value.trim();
+
+  try {
+    const res = await fetch(`${apiBaseUrl}/maids`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, telegram_username })
+    });
+    if (res.ok) {
+      document.getElementById('add-maid-form').reset();
+      fetchMaids();
+    }
+  } catch (e) {
+    console.error('Error adding maid:', e);
+  }
+}
+
+// Удалить сотрудника
+async function deleteMaid(id) {
+  if (!confirm('Вы уверены, что хотите удалить сотрудника?')) return;
+  try {
+    const res = await fetch(`${apiBaseUrl}/maids/${id}`, {
+      method: 'DELETE'
+    });
+    if (res.ok) {
+      fetchMaids();
+    }
+  } catch (e) {
+    console.error('Error deleting maid:', e);
+  }
+}
+
+// Переключение вкладок внутри админки
+function switchAdminSubtab(subtabId) {
+  state.adminSubtab = subtabId;
+
+  // Кнопки
+  const subtabs = ['plan', 'maids', 'cottages'];
+  subtabs.forEach(tab => {
+    const btn = document.getElementById(`admin-subtab-${tab}`);
+    const content = document.getElementById(`admin-content-${tab}`);
+    if (btn) {
+      if (tab === subtabId) {
+        btn.className = 'pb-sm font-bold text-sm transition-colors border-b-2 border-primary text-primary';
+      } else {
+        btn.className = 'pb-sm font-semibold text-sm transition-colors text-on-surface-variant hover:text-on-surface';
+      }
+    }
+    if (content) {
+      if (tab === subtabId) content.classList.remove('hidden');
+      else content.classList.add('hidden');
+    }
+  });
+
+  if (subtabId === 'plan') renderPlanAdmin();
+  if (subtabId === 'maids') renderMaidsAdmin();
+  if (subtabId === 'cottages') renderCottagesAdmin();
+}
+
+// Рендеринг таблицы персонала
+function renderMaidsAdmin() {
+  const tbody = document.getElementById('admin-maids-table-body');
+  if (!tbody) return;
+
+  if (state.maids.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="3" class="p-md text-center text-on-surface-variant text-xs">Нет зарегистрированных сотрудников</td>
+      </tr>
+    `;
+    return;
+  }
+
+  let html = '';
+  state.maids.forEach(m => {
+    html += `
+      <tr class="border-b hover:bg-slate-50 transition-colors">
+        <td class="p-md font-semibold text-primary">${m.name}</td>
+        <td class="p-md text-on-surface-variant">@${m.telegram_username || 'нет'}</td>
+        <td class="p-md text-right">
+          <button onclick="deleteMaid(${m.id})" class="text-error hover:text-error/80 font-bold text-xs">Удалить</button>
+        </td>
+      </tr>
+    `;
+  });
+  tbody.innerHTML = html;
+}
+
+// Рендеринг таблицы планирования уборок
+function renderPlanAdmin() {
+  const tbody = document.getElementById('admin-plan-table-body');
+  if (!tbody) return;
+
+  if (state.cottages.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" class="p-md text-center text-on-surface-variant text-xs">Нет домиков в системе</td>
+      </tr>
+    `;
+    return;
+  }
+
+  let html = '';
+  state.cottages.forEach(c => {
+    // Dropdown для типа уборки
+    const types = [
+      { val: 'уборка не требуется', label: 'Не требуется' },
+      { val: 'выезд+заезд', label: 'Выезд+Заезд 🚨' },
+      { val: 'выезд', label: 'Выезд' },
+      { val: 'промежуточная', label: 'Промежуточная' }
+    ];
+    
+    let typeSelect = `<select id="plan-type-${c.number}" onchange="updatePlanItem(${c.number}, this.value, document.getElementById('plan-maid-${c.number}').value, document.getElementById('plan-pri-${c.number}').value, '${c.status}')" class="bg-surface-container-low border rounded-xl px-2 py-1 text-xs focus:outline-none">`;
+    types.forEach(t => {
+      const selected = c.type === t.val ? 'selected' : '';
+      typeSelect += `<option value="${t.val}" ${selected}>${t.label}</option>`;
+    });
+    typeSelect += `</select>`;
+
+    // Dropdown для горничных
+    let maidSelect = `<select id="plan-maid-${c.number}" onchange="updatePlanItem(${c.number}, document.getElementById('plan-type-${c.number}').value, this.value, document.getElementById('plan-pri-${c.number}').value, '${c.status}')" class="bg-surface-container-low border rounded-xl px-2 py-1 text-xs focus:outline-none">`;
+    maidSelect += `<option value="">-- Не назначена --</option>`;
+    state.maids.forEach(m => {
+      const selected = c.maid_id === m.id.toString() ? 'selected' : '';
+      maidSelect += `<option value="${m.id}" ${selected}>${m.name}</option>`;
+    });
+    maidSelect += `</select>`;
+
+    // Статус
+    let statusText = 'Свободен';
+    let badge = 'bg-slate-100 text-slate-700';
+    if (c.status === 'yellow') { statusText = 'В процессе'; badge = 'bg-yellow-100 text-yellow-800'; }
+    else if (c.status === 'orange') { statusText = 'Проверка'; badge = 'bg-orange-100 text-orange-800'; }
+    else if (c.status === 'green') { statusText = 'Готов'; badge = 'bg-green-100 text-green-800'; }
+
+    html += `
+      <tr class="border-b hover:bg-slate-50 transition-colors">
+        <td class="p-md font-bold text-primary">${c.name}</td>
+        <td class="p-md">${typeSelect}</td>
+        <td class="p-md">${maidSelect}</td>
+        <td class="p-md">
+          <input type="number" id="plan-pri-${c.number}" min="1" max="100" value="${c.priority || c.number}" 
+            onchange="updatePlanItem(${c.number}, document.getElementById('plan-type-${c.number}').value, document.getElementById('plan-maid-${c.number}').value, this.value, '${c.status}')"
+            class="w-16 bg-surface-container-low border rounded-xl px-2 py-1 text-xs text-center focus:outline-none" />
+        </td>
+        <td class="p-md">
+          <span class="px-2 py-1 rounded-full text-[10px] font-bold ${badge}">${statusText}</span>
+        </td>
+      </tr>
+    `;
+  });
+  tbody.innerHTML = html;
+}
+
+// Сохранить изменения планирования уборок
+async function updatePlanItem(number, type, maidId, priority, currentStatus) {
+  let newStatus = currentStatus;
+  if (type === 'уборка не требуется') {
+    newStatus = 'green';
+  } else if (currentStatus === 'green') {
+    newStatus = 'white';
+  }
+
+  try {
+    const res = await fetch(`${apiBaseUrl}/cottages/${number}/assignment`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, maid_id: maidId, priority: parseInt(priority) || number, status: newStatus })
+    });
+    if (res.ok) {
+      await fetchCottages();
+    }
+  } catch (e) {
+    console.error('Error updating plan item:', e);
+  }
+}
+
+// Рендеринг таблицы списка всех домиков
+function renderCottagesAdmin() {
+  const tbody = document.getElementById('admin-cottages-table-body');
+  if (!tbody) return;
+
+  if (state.cottages.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="4" class="p-md text-center text-on-surface-variant text-xs">Нет домиков в системе</td>
+      </tr>
+    `;
+    return;
+  }
+
+  let html = '';
+  state.cottages.forEach(c => {
+    html += `
+      <tr class="border-b hover:bg-slate-50 transition-colors">
+        <td class="p-md font-extrabold text-primary">№${c.number}</td>
+        <td class="p-md font-semibold">${c.name}</td>
+        <td class="p-md text-xs text-on-surface-variant">
+          Большие: <span class="font-bold text-on-surface">${c.beds_big}</span>, 
+          Средние: <span class="font-bold text-on-surface">${c.beds_medium}</span>, 
+          Маленькие: <span class="font-bold text-on-surface">${c.beds_small}</span>
+          ${c.beds_elastic ? ' (простыня на резинке)' : ''}
+        </td>
+        <td class="p-md text-right">
+          <div class="flex gap-xs justify-end">
+            <button onclick="editCottage(${c.number})" class="text-primary hover:underline font-bold text-xs px-2 py-1">Ред.</button>
+            <button onclick="deleteCottage(${c.number})" class="text-error hover:underline font-bold text-xs px-2 py-1">Удал.</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  });
+  tbody.innerHTML = html;
+}
+
+// Редактирование существующего домика (предзаполнение формы)
+function editCottage(number) {
+  const cottage = state.cottages.find(c => c.number === number);
+  if (!cottage) return;
+
+  document.getElementById('edit-cottage-mode').value = 'edit';
+  
+  const numInput = document.getElementById('add-cottage-number');
+  numInput.value = cottage.number;
+  numInput.disabled = true;
+  
+  document.getElementById('add-cottage-name').value = cottage.name;
+  document.getElementById('add-cottage-beds-big').value = cottage.beds_big;
+  document.getElementById('add-cottage-beds-med').value = cottage.beds_medium;
+  document.getElementById('add-cottage-beds-small').value = cottage.beds_small;
+  document.getElementById('add-cottage-beds-elastic').value = cottage.beds_elastic;
+  document.getElementById('add-cottage-stayover-full').checked = !!cottage.stay_over_full;
+  
+  document.getElementById('cottage-form-title').innerText = `Редактировать №${number}`;
+}
+
+// Сброс формы редактора домиков
+function resetCottageForm() {
+  document.getElementById('edit-cottage-mode').value = 'create';
+  
+  const numInput = document.getElementById('add-cottage-number');
+  numInput.value = '';
+  numInput.disabled = false;
+
+  document.getElementById('add-cottage-form').reset();
+  document.getElementById('cottage-form-title').innerText = 'Добавить домик';
+}
+
+// Добавление или обновление конфигурации домика
+async function saveCottageConfig(event) {
+  event.preventDefault();
+  const mode = document.getElementById('edit-cottage-mode').value;
+  const number = parseInt(document.getElementById('add-cottage-number').value);
+  const name = document.getElementById('add-cottage-name').value.trim();
+  const beds_big = parseInt(document.getElementById('add-cottage-beds-big').value) || 0;
+  const beds_medium = parseInt(document.getElementById('add-cottage-beds-med').value) || 0;
+  const beds_small = parseInt(document.getElementById('add-cottage-beds-small').value) || 0;
+  const beds_elastic = parseInt(document.getElementById('add-cottage-beds-elastic').value) || 0;
+  const stay_over_full = document.getElementById('add-cottage-stayover-full').checked ? 1 : 0;
+
+  const url = mode === 'create' ? `${apiBaseUrl}/cottages` : `${apiBaseUrl}/cottages/${number}/config`;
+  const method = mode === 'create' ? 'POST' : 'PUT';
+
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ number, name, beds_big, beds_medium, beds_small, beds_elastic, stay_over_full })
+    });
+    if (res.ok) {
+      resetCottageForm();
+      fetchCottages();
+    } else {
+      const err = await res.json();
+      alert(`Ошибка: ${err.error || 'не удалось сохранить домик'}`);
+    }
+  } catch (e) {
+    console.error('Error saving cottage:', e);
+  }
+}
+
+// Удаление домика
+async function deleteCottage(number) {
+  if (!confirm(`Вы действительно хотите удалить Домик №${number} из базы данных?`)) return;
+  try {
+    const res = await fetch(`${apiBaseUrl}/cottages/${number}`, {
+      method: 'DELETE'
+    });
+    if (res.ok) {
+      fetchCottages();
+    }
+  } catch (e) {
+    console.error('Error deleting cottage:', e);
+  }
 }
