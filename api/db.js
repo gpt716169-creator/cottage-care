@@ -9,6 +9,7 @@ dotenv.config();
 const isProduction = !!process.env.DATABASE_URL;
 let dbInstance = null;
 let dbType = 'sqlite';
+let initPromise = null;
 
 // Функция форматирования запросов (замена ? на $1, $2 для PostgreSQL)
 function prepareSql(sql) {
@@ -22,47 +23,53 @@ function prepareSql(sql) {
 // Инициализация соединения
 export async function initDb() {
   if (dbInstance) return dbInstance;
+  if (initPromise) return initPromise;
 
-  if (isProduction) {
-    dbType = 'postgres';
-    console.log('Connecting to PostgreSQL database...');
-    try {
-      const pool = new pg.Pool({
-        connectionString: process.env.DATABASE_URL,
-        ssl: { rejectUnauthorized: false }
-      });
-      // Тестовый запрос для проверки соединения
-      await pool.query('SELECT 1');
-      dbInstance = pool;
-      console.log('PostgreSQL connection established successfully.');
-    } catch (e) {
-      console.warn('PostgreSQL connection failed. Falling back to SQLite local database. Error:', e.message);
+  initPromise = (async () => {
+    if (isProduction) {
+      dbType = 'postgres';
+      console.log('Connecting to PostgreSQL database...');
+      try {
+        const pool = new pg.Pool({
+          connectionString: process.env.DATABASE_URL,
+          ssl: { rejectUnauthorized: false }
+        });
+        // Тестовый запрос для проверки соединения
+        await pool.query('SELECT 1');
+        dbInstance = pool;
+        console.log('PostgreSQL connection established successfully.');
+      } catch (e) {
+        console.warn('PostgreSQL connection failed. Falling back to SQLite local database. Error:', e.message);
+        dbType = 'sqlite';
+      }
+    }
+
+    if (!isProduction || dbType === 'sqlite') {
       dbType = 'sqlite';
-    }
-  }
+      console.log('Connecting to SQLite database...');
+      const dbPath = path.resolve('db.sqlite3');
+      
+      // Обеспечиваем существование папки для бд, если надо
+      const dir = path.dirname(dbPath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
 
-  if (!isProduction || dbType === 'sqlite') {
-    dbType = 'sqlite';
-    console.log('Connecting to SQLite database...');
-    const dbPath = path.resolve('db.sqlite3');
-    
-    // Обеспечиваем существование папки для бд, если надо
-    const dir = path.dirname(dbPath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+      dbInstance = new sqlite3.Database(dbPath);
     }
 
-    dbInstance = new sqlite3.Database(dbPath);
-  }
+    await createTables();
+    await seedInitialData();
 
-  await createTables();
-  await seedInitialData();
+    return dbInstance;
+  })();
 
-  return dbInstance;
+  return initPromise;
 }
 
 // Выполнение SELECT запросов (возвращает массив строк)
 export async function query(sql, params = []) {
+  await initDb();
   const formattedSql = prepareSql(sql);
   
   if (dbType === 'postgres') {
@@ -86,6 +93,7 @@ export async function queryOne(sql, params = []) {
 
 // Выполнение INSERT/UPDATE/DELETE
 export async function run(sql, params = []) {
+  await initDb();
   const formattedSql = prepareSql(sql);
 
   if (dbType === 'postgres') {
