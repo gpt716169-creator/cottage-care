@@ -124,13 +124,13 @@ async function startServer() {
 
   // 1.1 Добавить новый домик в редакторе
   app.post('/api/cottages', async (req, res) => {
-    const { number, name, beds_big, beds_medium, beds_small, beds_elastic, stay_over_full } = req.body;
+    const { number, name, beds_big, beds_medium, beds_small, beds_elastic, stay_over_full, laundry_config } = req.body;
     const defaultChecklist = JSON.stringify(["Пыль","Постельное белье","Вынос мусора","Полотенца"]);
     try {
       await run(
-        `INSERT INTO cottages (number, name, type, priority, status, beds_big, beds_medium, beds_small, beds_elastic, stay_over_full, checklist, checklist_done, maid_comment)
-         VALUES (?, ?, 'уборка не требуется', ?, 'green', ?, ?, ?, ?, ?, ?, '[]', '')`,
-        [number, name, number, beds_big, beds_medium, beds_small, beds_elastic, stay_over_full, defaultChecklist]
+        `INSERT INTO cottages (number, name, type, priority, status, beds_big, beds_medium, beds_small, beds_elastic, stay_over_full, checklist, checklist_done, maid_comment, laundry_config)
+         VALUES (?, ?, 'уборка не требуется', ?, 'green', ?, ?, ?, ?, ?, ?, '[]', '', ?)`,
+        [number, name, number, beds_big, beds_medium, beds_small, beds_elastic, stay_over_full, defaultChecklist, laundry_config || '{}']
       );
       res.json({ success: true, number });
     } catch (e) {
@@ -141,12 +141,12 @@ async function startServer() {
   // 1.2 Изменить конфигурацию домика
   app.put('/api/cottages/:number/config', async (req, res) => {
     const { number } = req.params;
-    const { name, beds_big, beds_medium, beds_small, beds_elastic, stay_over_full } = req.body;
+    const { name, beds_big, beds_medium, beds_small, beds_elastic, stay_over_full, laundry_config } = req.body;
     try {
       await run(
-        `UPDATE cottages SET name = ?, beds_big = ?, beds_medium = ?, beds_small = ?, beds_elastic = ?, stay_over_full = ? 
+        `UPDATE cottages SET name = ?, beds_big = ?, beds_medium = ?, beds_small = ?, beds_elastic = ?, stay_over_full = ?, laundry_config = ? 
          WHERE number = ?`,
-        [name, beds_big, beds_medium, beds_small, beds_elastic, stay_over_full, number]
+        [name, beds_big, beds_medium, beds_small, beds_elastic, stay_over_full, laundry_config || '{}', number]
       );
       res.json({ success: true, number });
     } catch (e) {
@@ -309,67 +309,51 @@ async function startServer() {
       const stock = await query('SELECT * FROM laundry_stock');
       const cottages = await query('SELECT * FROM cottages');
       
-      // Расчет потребностей
-      const needsToday = {
-        sheet_big: 0,
-        sheet_medium: 0,
-        sheet_small: 0,
-        sheet_elastic: 0,
-        towel_big: 0,
-        towel_small: 0
-      };
-
-      const needsTomorrow = {
-        sheet_big: 0,
-        sheet_medium: 0,
-        sheet_small: 0,
-        sheet_elastic: 0,
-        towel_big: 0,
-        towel_small: 0
-      };
+      const needsToday = {};
+      const needsTomorrow = {};
+      stock.forEach(item => {
+        needsToday[item.item_name] = 0;
+        needsTomorrow[item.item_name] = 0;
+      });
 
       cottages.forEach(c => {
         const isCheckout = c.type === 'выезд' || c.type === 'выезд+заезд';
         const isStayOver = c.type === 'промежуточная';
+        const config = JSON.parse(c.laundry_config || '{}');
 
-        // Сегодняшняя потребность (если домик еще не убран - статус не зеленый)
         if (c.status !== 'green') {
           if (isCheckout) {
-            needsToday.sheet_big += c.beds_big;
-            needsToday.sheet_medium += c.beds_medium;
-            needsToday.sheet_small += c.beds_small;
-            needsToday.sheet_elastic += c.beds_elastic;
-            // Полотенца: 1 большое и 1 маленькое на каждое спальное место
-            const totalBeds = c.beds_big * 2 + c.beds_medium * 2 + c.beds_small;
-            needsToday.towel_big += totalBeds;
-            needsToday.towel_small += totalBeds;
+            Object.keys(config).forEach(item => {
+              if (needsToday[item] !== undefined) {
+                needsToday[item] += parseInt(config[item] || 0);
+              }
+            });
           } else if (isStayOver) {
-            if (c.stay_over_full === 1) {
-              needsToday.sheet_big += c.beds_big;
-              needsToday.sheet_medium += c.beds_medium;
-              needsToday.sheet_small += c.beds_small;
-              needsToday.sheet_elastic += c.beds_elastic;
-            }
-            const totalBeds = c.beds_big * 2 + c.beds_medium * 2 + c.beds_small;
-            needsToday.towel_big += totalBeds;
-            needsToday.towel_small += totalBeds;
+            Object.keys(config).forEach(item => {
+              if (needsToday[item] !== undefined) {
+                if (c.stay_over_full === 1 || item.includes('towel')) {
+                  needsToday[item] += parseInt(config[item] || 0);
+                }
+              }
+            });
           }
         }
 
-        // Завтрашняя потребность (симуляция: все выезды и выезды+заезды завтра снова будут требовать белья,
-        // плюс домики, которые сегодня были убраны или пропущены)
-        // Для демонстрации возьмем фиксированный коэффициент завтрашней потребности (например, 70% от всех выездов)
+        // Завтрашняя потребность
         if (isCheckout) {
-          needsTomorrow.sheet_big += c.beds_big;
-          needsTomorrow.sheet_medium += c.beds_medium;
-          needsTomorrow.sheet_small += c.beds_small;
-          needsTomorrow.sheet_elastic += c.beds_elastic;
-          const totalBeds = c.beds_big * 2 + c.beds_medium * 2 + c.beds_small;
-          needsTomorrow.towel_big += totalBeds;
-          needsTomorrow.towel_small += totalBeds;
-        } else if (isStayOver && Math.random() > 0.5) { // Случайная смена белья завтра
-          needsTomorrow.towel_big += (c.beds_big * 2 + c.beds_medium * 2 + c.beds_small);
-          needsTomorrow.towel_small += (c.beds_big * 2 + c.beds_medium * 2 + c.beds_small);
+          Object.keys(config).forEach(item => {
+            if (needsTomorrow[item] !== undefined) {
+              needsTomorrow[item] += parseInt(config[item] || 0);
+            }
+          });
+        } else if (isStayOver) {
+          Object.keys(config).forEach(item => {
+            if (needsTomorrow[item] !== undefined) {
+              if (item.includes('towel')) {
+                needsTomorrow[item] += parseInt(config[item] || 0);
+              }
+            }
+          });
         }
       });
 
@@ -385,12 +369,37 @@ async function startServer() {
 
   // 2. Обновить количество белья на складе
   app.put('/api/laundry/stock', async (req, res) => {
-    const { stock } = req.body; // Массив объектов { item_name, quantity }
+    const { stock } = req.body;
     try {
       for (const item of stock) {
         await run('UPDATE laundry_stock SET quantity = ? WHERE item_name = ?', [item.quantity, item.item_name]);
       }
       res.json({ success: true, stock });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  // 3. Добавить новую категорию белья
+  app.post('/api/laundry', async (req, res) => {
+    const { item_name, display_name, quantity } = req.body;
+    try {
+      await run(
+        'INSERT INTO laundry_stock (item_name, display_name, quantity) VALUES (?, ?, ?)',
+        [item_name, display_name, quantity || 0]
+      );
+      res.json({ success: true, item_name, display_name, quantity });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  // 4. Удалить категорию белья
+  app.delete('/api/laundry/:item_name', async (req, res) => {
+    const { item_name } = req.params;
+    try {
+      await run('DELETE FROM laundry_stock WHERE item_name = ?', [item_name]);
+      res.json({ success: true, item_name });
     } catch (e) {
       res.status(500).json({ error: e.message });
     }

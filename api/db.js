@@ -123,6 +123,7 @@ async function createTables() {
       beds_small INTEGER DEFAULT 0,
       beds_elastic INTEGER DEFAULT 0,
       stay_over_full INTEGER DEFAULT 0,
+      laundry_config TEXT,
       maid_id TEXT,
       checklist TEXT,
       checklist_done TEXT,
@@ -176,6 +177,15 @@ async function createTables() {
       created_at TEXT NOT NULL
     )
   `);
+
+  // Таблица горничных (персонала)
+  await run(`
+    CREATE TABLE IF NOT EXISTS maids (
+      id ${serialType},
+      name TEXT NOT NULL,
+      telegram_username TEXT
+    )
+  `);
 }
 
 // Первичное наполнение тестовыми данными
@@ -210,10 +220,36 @@ async function seedInitialData() {
     ];
 
     for (const c of initialCottages) {
+      const bedsBig = c[5];
+      const bedsMed = c[6];
+      const bedsSmall = c[7];
+      const bedsElastic = c[8];
+      
+      const config = {};
+      if (bedsBig > 0) {
+        config['sheet_big'] = bedsBig;
+        config['towel_big'] = bedsBig * 2;
+      }
+      if (bedsMed > 0) {
+        config['sheet_medium'] = bedsMed;
+        config['towel_big'] = (config['towel_big'] || 0) + bedsMed * 2;
+      }
+      if (bedsSmall > 0) {
+        config['sheet_small'] = bedsSmall;
+        config['towel_big'] = (config['towel_big'] || 0) + bedsSmall * 2;
+      }
+      if (bedsElastic > 0) {
+        config['sheet_elastic'] = bedsElastic;
+      }
+      
+      const laundryConfigStr = JSON.stringify(config);
+      const params = [...c];
+      params.push(laundryConfigStr);
+
       await run(`
-        INSERT INTO cottages (number, name, type, priority, status, beds_big, beds_medium, beds_small, beds_elastic, stay_over_full, maid_id, checklist, checklist_done, maid_comment, rating_score, rating_comment)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, c);
+        INSERT INTO cottages (number, name, type, priority, status, beds_big, beds_medium, beds_small, beds_elastic, stay_over_full, maid_id, checklist, checklist_done, maid_comment, rating_score, rating_comment, laundry_config)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, params);
     }
   }
 
@@ -268,6 +304,23 @@ async function seedInitialData() {
         INSERT INTO purchases (item_name, quantity, urgency, status, created_at)
         VALUES (?, ?, ?, ?, ?)
       `, p);
+    }
+  }
+
+  const maidCount = await queryOne('SELECT COUNT(*) as count FROM maids');
+  if (maidCount.count === 0) {
+    console.log('Seeding initial maids...');
+    const initialMaids = [
+      ['Мария Иванова', 'maria_clean'],
+      ['Елена Петрова', 'elena_clean'],
+      ['Анна Смирнова', 'anna_clean']
+    ];
+
+    for (const m of initialMaids) {
+      await run(`
+        INSERT INTO maids (name, telegram_username)
+        VALUES (?, ?)
+      `, m);
     }
   }
 }

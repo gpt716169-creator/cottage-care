@@ -135,7 +135,7 @@ function switchTab(tabId) {
 async function refreshData() {
   await fetchCottages();
   await fetchMaids(); // Загружаем список горничных для селекторов и админки
-  if (state.currentTab === 'laundry') await fetchLaundry();
+  if (state.currentTab === 'laundry' || state.currentTab === 'admin') await fetchLaundry();
   if (state.currentTab === 'requests') await fetchRequests();
   if (state.currentTab === 'reports') await fetchReports();
   if (state.currentTab === 'purchases') await fetchPurchases();
@@ -167,6 +167,12 @@ async function fetchLaundry() {
     const res = await fetch(`${apiBaseUrl}/laundry`);
     state.laundry = await res.json();
     renderLaundry();
+    if (state.currentTab === 'admin') {
+      const modeEl = document.getElementById('edit-cottage-mode');
+      if (modeEl && modeEl.value === 'create') {
+        renderCottageLaundryForm({});
+      }
+    }
   } catch (e) {
     console.error('Error fetching laundry:', e);
   }
@@ -254,14 +260,18 @@ function updateRoleUI() {
   const maidBanner = document.getElementById('maid-banner');
   const fabContainer = document.getElementById('supervisor-fab-container');
 
+  const addLaundryContainer = document.getElementById('add-laundry-category-container');
+
   if (isSupervisor) {
     if (bentoStats) bentoStats.classList.remove('hidden');
     if (maidBanner) maidBanner.classList.add('hidden');
     if (fabContainer) fabContainer.classList.remove('hidden');
+    if (addLaundryContainer) addLaundryContainer.classList.remove('hidden');
   } else {
     if (bentoStats) bentoStats.classList.add('hidden');
     if (maidBanner) maidBanner.classList.remove('hidden');
     if (fabContainer) fabContainer.classList.add('hidden'); // У горничных нет FAB добавления заявок (они создают их внутри домика)
+    if (addLaundryContainer) addLaundryContainer.classList.add('hidden');
   }
 
   // Показ/скрытие кнопок навигации (Desktop Sidebar и Mobile Bottom Nav)
@@ -493,10 +503,17 @@ function renderLaundry() {
 
     // Инпуты (Супервайзер может редактировать, для горничной — readonly)
     const isSupervisor = state.currentRole === 'supervisor';
+    const deleteBtn = isSupervisor 
+      ? `<button onclick="deleteLaundryCategory('${item.item_name}')" class="text-error hover:text-red-700 active:scale-90 transition-all p-1 flex items-center justify-center rounded-lg" title="Удалить позицию"><span class="material-symbols-outlined text-[18px]">delete</span></button>` 
+      : '';
+
     const inputHtml = `
       <div class="bg-surface-container-low p-md rounded-xl border border-outline-variant/15 flex flex-col justify-between gap-sm">
         <div>
-          <span class="font-bold text-primary block text-sm">${item.display_name}</span>
+          <div class="flex justify-between items-start">
+            <span class="font-bold text-primary block text-sm">${item.display_name}</span>
+            ${deleteBtn}
+          </div>
           <div class="mt-xs">${deficitText}</div>
         </div>
         <div class="flex items-center justify-between">
@@ -1557,15 +1574,28 @@ function renderCottagesAdmin() {
 
   let html = '';
   state.cottages.forEach(c => {
+    let configStr = '';
+    try {
+      const config = JSON.parse(c.laundry_config || '{}');
+      const parts = [];
+      Object.keys(config).forEach(item_name => {
+        const stockItem = state.laundry?.stock?.find(s => s.item_name === item_name);
+        const displayName = stockItem ? stockItem.display_name : item_name;
+        if (config[item_name] > 0) {
+          parts.push(`${displayName}: <span class="font-bold text-on-surface">${config[item_name]}</span>`);
+        }
+      });
+      configStr = parts.length > 0 ? parts.join(', ') : '<span class="text-on-surface-variant italic">Комплект не настроен</span>';
+    } catch (e) {
+      configStr = 'Ошибка разбора комплекта';
+    }
+
     html += `
       <tr class="border-b hover:bg-slate-50 transition-colors">
         <td class="p-md font-extrabold text-primary">№${c.number}</td>
         <td class="p-md font-semibold">${c.name}</td>
-        <td class="p-md text-xs text-on-surface-variant">
-          Большие: <span class="font-bold text-on-surface">${c.beds_big}</span>, 
-          Средние: <span class="font-bold text-on-surface">${c.beds_medium}</span>, 
-          Маленькие: <span class="font-bold text-on-surface">${c.beds_small}</span>
-          ${c.beds_elastic ? ' (простыня на резинке)' : ''}
+        <td class="p-md text-xs text-on-surface-variant max-w-xs truncate" title="${configStr.replace(/<[^>]*>/g, '')}">
+          ${configStr}
         </td>
         <td class="p-md text-right">
           <div class="flex gap-xs justify-end">
@@ -1577,6 +1607,37 @@ function renderCottagesAdmin() {
     `;
   });
   tbody.innerHTML = html;
+}
+
+// Рендерить список полей для выбора белья в форме домика
+function renderCottageLaundryForm(currentConfig = {}) {
+  const container = document.getElementById('cottage-laundry-config-container');
+  if (!container) return;
+
+  if (!state.laundry || !state.laundry.stock || state.laundry.stock.length === 0) {
+    container.innerHTML = `<span class="text-xs text-on-surface-variant italic">Нет доступных позиций белья</span>`;
+    return;
+  }
+
+  let html = '';
+  state.laundry.stock.forEach(item => {
+    const qty = currentConfig[item.item_name] || 0;
+    html += `
+      <div class="flex items-center justify-between text-xs py-xs border-b border-outline-variant/5 last:border-b-0">
+        <label class="font-medium text-primary" for="cottage-laundry-${item.item_name}">${item.display_name}</label>
+        <div class="flex items-center gap-xs">
+          <input type="number" 
+                 id="cottage-laundry-${item.item_name}" 
+                 data-item-name="${item.item_name}"
+                 value="${qty}" 
+                 min="0"
+                 class="w-16 text-center bg-white border border-outline-variant/30 rounded-lg py-0.5 font-bold focus:outline-none focus:ring-1 focus:ring-primary text-xs"/>
+          <span class="text-[10px] text-on-surface-variant font-medium">шт.</span>
+        </div>
+      </div>
+    `;
+  });
+  container.innerHTML = html;
 }
 
 // Редактирование существующего домика (предзаполнение формы)
@@ -1597,6 +1658,15 @@ function editCottage(number) {
   document.getElementById('add-cottage-beds-elastic').value = cottage.beds_elastic;
   document.getElementById('add-cottage-stayover-full').checked = !!cottage.stay_over_full;
   
+  // Парсим и заполняем комплектацию белья
+  let config = {};
+  try {
+    config = JSON.parse(cottage.laundry_config || '{}');
+  } catch (e) {
+    console.error(e);
+  }
+  renderCottageLaundryForm(config);
+
   document.getElementById('cottage-form-title').innerText = `Редактировать №${number}`;
 }
 
@@ -1609,6 +1679,7 @@ function resetCottageForm() {
   numInput.disabled = false;
 
   document.getElementById('add-cottage-form').reset();
+  renderCottageLaundryForm({});
   document.getElementById('cottage-form-title').innerText = 'Добавить домик';
 }
 
@@ -1624,6 +1695,17 @@ async function saveCottageConfig(event) {
   const beds_elastic = parseInt(document.getElementById('add-cottage-beds-elastic').value) || 0;
   const stay_over_full = document.getElementById('add-cottage-stayover-full').checked ? 1 : 0;
 
+  // Собираем комплектацию белья с формы в JSON
+  const config = {};
+  document.querySelectorAll('#cottage-laundry-config-container input').forEach(input => {
+    const itemName = input.getAttribute('data-item-name');
+    const val = parseInt(input.value) || 0;
+    if (val > 0) {
+      config[itemName] = val;
+    }
+  });
+  const laundry_config = JSON.stringify(config);
+
   const url = mode === 'create' ? `${apiBaseUrl}/cottages` : `${apiBaseUrl}/cottages/${number}/config`;
   const method = mode === 'create' ? 'POST' : 'PUT';
 
@@ -1631,7 +1713,7 @@ async function saveCottageConfig(event) {
     const res = await fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ number, name, beds_big, beds_medium, beds_small, beds_elastic, stay_over_full })
+      body: JSON.stringify({ number, name, beds_big, beds_medium, beds_small, beds_elastic, stay_over_full, laundry_config })
     });
     if (res.ok) {
       resetCottageForm();
@@ -1675,4 +1757,46 @@ function saveSupervisorProfile(event) {
     tg.HapticFeedback.notificationOccurred('success');
   }
   alert('Профиль супервайзера успешно обновлен!');
+}
+
+// Добавление новой категории белья
+async function addLaundryCategory(event) {
+  event.preventDefault();
+  const name = document.getElementById('add-laundry-name').value.trim().toLowerCase();
+  const display = document.getElementById('add-laundry-display').value.trim();
+  const qty = parseInt(document.getElementById('add-laundry-qty').value) || 0;
+
+  try {
+    const res = await fetch(`${apiBaseUrl}/laundry`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ item_name: name, display_name: display, quantity: qty })
+    });
+    if (res.ok) {
+      document.getElementById('add-laundry-form').reset();
+      fetchLaundry();
+      if (tg) tg.HapticFeedback.notificationOccurred('success');
+    } else {
+      const err = await res.json();
+      alert(`Ошибка: ${err.error || 'не удалось добавить категорию'}`);
+    }
+  } catch (e) {
+    console.error('Error adding laundry category:', e);
+  }
+}
+
+// Удаление категории белья
+async function deleteLaundryCategory(itemName) {
+  if (!confirm(`Вы действительно хотите удалить категорию белья "${itemName}" и сбросить её учет?`)) return;
+  try {
+    const res = await fetch(`${apiBaseUrl}/laundry/${itemName}`, {
+      method: 'DELETE'
+    });
+    if (res.ok) {
+      fetchLaundry();
+      if (tg) tg.HapticFeedback.notificationOccurred('warning');
+    }
+  } catch (e) {
+    console.error('Error deleting laundry category:', e);
+  }
 }
