@@ -417,74 +417,138 @@
                     
                     <!-- SVG Resort Map (Clean, premium vector style) -->
                     <div class="w-full border rounded-xl overflow-hidden bg-[#e2f0d9] p-2 relative flex justify-center items-center min-h-[350px]">
-                        <svg viewBox="0 0 800 500" class="w-full h-auto max-w-[700px] select-none" id="resort-svg-map">
-                            <!-- Forests/Trees -->
-                            <rect x="0" y="0" width="800" height="500" fill="#e2f0d9" rx="12"/>
-                            
-                            <!-- Forest patches (Background) -->
-                            <path d="M 50,50 Q 80,30 110,60 T 170,50 T 230,80 T 150,120 Z" fill="#c5e0b4" opacity="0.6" />
-                            <path d="M 600,80 Q 640,50 680,90 T 750,70 T 780,150 T 670,180 Z" fill="#c5e0b4" opacity="0.6" />
-                            <path d="M 100,350 Q 150,320 200,360 T 280,330 T 220,450 Z" fill="#c5e0b4" opacity="0.6" />
-                            <path d="M 550,380 Q 600,330 650,390 T 720,350 T 680,470 Z" fill="#c5e0b4" opacity="0.6" />
-
+                        <svg viewBox="0 0 800 500" class="w-full h-auto max-w-[800px] select-none" id="resort-svg-map">
                             <!-- Paths/Walkways (Sandy color) -->
-                            <path d="M 400,450 L 400,250 Q 400,200 350,180 L 150,180" fill="none" stroke="#f2ddc9" stroke-width="24" stroke-linecap="round" />
-                            <path d="M 400,250 Q 400,200 450,180 L 650,180" fill="none" stroke="#f2ddc9" stroke-width="24" stroke-linecap="round" />
-                            <path d="M 350,180 Q 250,150 250,100" fill="none" stroke="#f2ddc9" stroke-width="16" stroke-linecap="round" />
-                            <path d="M 450,180 Q 550,150 550,100" fill="none" stroke="#f2ddc9" stroke-width="16" stroke-linecap="round" />
-                            
-                            <!-- Walkways Inner lines -->
-                            <path d="M 400,450 L 400,250 Q 400,200 350,180 L 150,180" fill="none" stroke="#fceddc" stroke-width="14" stroke-linecap="round" />
-                            <path d="M 400,250 Q 400,200 450,180 L 650,180" fill="none" stroke="#fceddc" stroke-width="14" stroke-linecap="round" />
+                            <path d="M 385,450 L 385,60 M 40,150 L 760,150 M 40,260 L 760,260" fill="none" stroke="#f2ddc9" stroke-width="16" stroke-linecap="round" />
+                            <path d="M 385,450 L 385,60 M 40,150 L 760,150 M 40,260 L 760,260" fill="none" stroke="#fceddc" stroke-width="8" stroke-linecap="round" />
                             
                             <!-- Reception (Admin Building) -->
-                            <g transform="translate(360, 380)" class="cursor-pointer">
-                                <rect x="0" y="0" width="80" height="60" fill="#324e58" rx="8" stroke="#ffffff" stroke-width="2"/>
-                                <polygon points="0,0 40,-20 80,0" fill="#203239"/>
-                                <text x="40" y="35" font-family="'Inter'" font-size="11" font-weight="bold" fill="#ffffff" text-anchor="middle">РЕЦЕПШН</text>
+                            <g transform="translate(345, 385)" class="cursor-pointer">
+                                <rect x="0" y="0" width="80" height="50" fill="#324e58" rx="8" stroke="#ffffff" stroke-width="2"/>
+                                <polygon points="0,0 40,-15 80,0" fill="#203239"/>
+                                <text x="40" y="30" font-family="'Inter'" font-size="10" font-weight="bold" fill="#ffffff" text-anchor="middle">РЕЦЕПШН</text>
                             </g>
 
-                            <!-- Cabins (Cottages) -->
-                            <!-- Cottage 1 -->
+                            <!-- Cabins (Cottages 1 to 23) -->
+                            <!-- Row 1: Y=80 -->
                             <g id="map-cabin-1" onclick="onMapCottageClick(1)" class="cursor-pointer group">
-                                <rect x="100" y="140" width="55" height="45" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2" class="transition-all duration-300"/>
-                                <polygon points="100,140 127.5,120 155,140" fill="#464b49" class="transition-all duration-300"/>
-                                <text x="127.5" y="167" font-family="'Inter'" font-size="13" font-weight="bold" fill="#324e58" text-anchor="middle">№1</text>
+                                <rect x="50" y="80" width="55" height="40" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2" class="transition-all duration-300"/>
+                                <polygon points="50,80 77.5,62 105,80" fill="#464b49" class="transition-all duration-300"/>
+                                <text x="77.5" y="105" font-family="'Inter'" font-size="12" font-weight="bold" fill="#324e58" text-anchor="middle">№1</text>
                             </g>
-
-                            <!-- Cottage 2 -->
                             <g id="map-cabin-2" onclick="onMapCottageClick(2)" class="cursor-pointer group">
-                                <rect x="220" y="70" width="55" height="45" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
-                                <polygon points="220,70 247.5,50 275,70" fill="#464b49"/>
-                                <text x="247.5" y="97" font-family="'Inter'" font-size="13" font-weight="bold" fill="#324e58" text-anchor="middle">№2</text>
+                                <rect x="140" y="80" width="55" height="40" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
+                                <polygon points="140,80 167.5,62 195,80" fill="#464b49"/>
+                                <text x="167.5" y="105" font-family="'Inter'" font-size="12" font-weight="bold" fill="#324e58" text-anchor="middle">№2</text>
                             </g>
-
-                            <!-- Cottage 3 -->
                             <g id="map-cabin-3" onclick="onMapCottageClick(3)" class="cursor-pointer group">
-                                <rect x="520" y="70" width="55" height="45" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
-                                <polygon points="520,70 547.5,50 575,70" fill="#464b49"/>
-                                <text x="547.5" y="97" font-family="'Inter'" font-size="13" font-weight="bold" fill="#324e58" text-anchor="middle">№3</text>
+                                <rect x="230" y="80" width="55" height="40" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
+                                <polygon points="230,80 257.5,62 285,80" fill="#464b49"/>
+                                <text x="257.5" y="105" font-family="'Inter'" font-size="12" font-weight="bold" fill="#324e58" text-anchor="middle">№3</text>
                             </g>
-
-                            <!-- Cottage 4 -->
                             <g id="map-cabin-4" onclick="onMapCottageClick(4)" class="cursor-pointer group">
-                                <rect x="640" y="140" width="55" height="45" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
-                                <polygon points="640,140 667.5,120 695,140" fill="#464b49"/>
-                                <text x="667.5" y="167" font-family="'Inter'" font-size="13" font-weight="bold" fill="#324e58" text-anchor="middle">№4</text>
+                                <rect x="320" y="80" width="55" height="40" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
+                                <polygon points="320,80 347.5,62 375,80" fill="#464b49"/>
+                                <text x="347.5" y="105" font-family="'Inter'" font-size="12" font-weight="bold" fill="#324e58" text-anchor="middle">№4</text>
                             </g>
-
-                            <!-- Cottage 5 -->
                             <g id="map-cabin-5" onclick="onMapCottageClick(5)" class="cursor-pointer group">
-                                <rect x="220" y="240" width="55" height="45" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
-                                <polygon points="220,240 247.5,220 275,240" fill="#464b49"/>
-                                <text x="247.5" y="267" font-family="'Inter'" font-size="13" font-weight="bold" fill="#324e58" text-anchor="middle">№5</text>
+                                <rect x="410" y="80" width="55" height="40" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
+                                <polygon points="410,80 437.5,62 465,80" fill="#464b49"/>
+                                <text x="437.5" y="105" font-family="'Inter'" font-size="12" font-weight="bold" fill="#324e58" text-anchor="middle">№5</text>
+                            </g>
+                            <g id="map-cabin-6" onclick="onMapCottageClick(6)" class="cursor-pointer group">
+                                <rect x="500" y="80" width="55" height="40" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
+                                <polygon points="500,80 527.5,62 555,80" fill="#464b49"/>
+                                <text x="527.5" y="105" font-family="'Inter'" font-size="12" font-weight="bold" fill="#324e58" text-anchor="middle">№6</text>
+                            </g>
+                            <g id="map-cabin-7" onclick="onMapCottageClick(7)" class="cursor-pointer group">
+                                <rect x="590" y="80" width="55" height="40" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
+                                <polygon points="590,80 617.5,62 645,80" fill="#464b49"/>
+                                <text x="617.5" y="105" font-family="'Inter'" font-size="12" font-weight="bold" fill="#324e58" text-anchor="middle">№7</text>
+                            </g>
+                            <g id="map-cabin-8" onclick="onMapCottageClick(8)" class="cursor-pointer group">
+                                <rect x="680" y="80" width="55" height="40" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
+                                <polygon points="680,80 707.5,62 735,80" fill="#464b49"/>
+                                <text x="707.5" y="105" font-family="'Inter'" font-size="12" font-weight="bold" fill="#324e58" text-anchor="middle">№8</text>
                             </g>
 
-                            <!-- Cottage 6 -->
-                            <g id="map-cabin-6" onclick="onMapCottageClick(6)" class="cursor-pointer group">
-                                <rect x="525" y="240" width="55" height="45" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
-                                <polygon points="525,240 552.5,220 580,240" fill="#464b49"/>
-                                <text x="552.5" y="267" font-family="'Inter'" font-size="13" font-weight="bold" fill="#324e58" text-anchor="middle">№6</text>
+                            <!-- Row 2: Y=190 -->
+                            <g id="map-cabin-9" onclick="onMapCottageClick(9)" class="cursor-pointer group">
+                                <rect x="50" y="190" width="55" height="40" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
+                                <polygon points="50,190 77.5,172 105,190" fill="#464b49"/>
+                                <text x="77.5" y="215" font-family="'Inter'" font-size="12" font-weight="bold" fill="#324e58" text-anchor="middle">№9</text>
+                            </g>
+                            <g id="map-cabin-10" onclick="onMapCottageClick(10)" class="cursor-pointer group">
+                                <rect x="140" y="190" width="55" height="40" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
+                                <polygon points="140,190 167.5,172 195,190" fill="#464b49"/>
+                                <text x="167.5" y="215" font-family="'Inter'" font-size="12" font-weight="bold" fill="#324e58" text-anchor="middle">№10</text>
+                            </g>
+                            <g id="map-cabin-11" onclick="onMapCottageClick(11)" class="cursor-pointer group">
+                                <rect x="230" y="190" width="55" height="40" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
+                                <polygon points="230,190 257.5,172 285,190" fill="#464b49"/>
+                                <text x="257.5" y="215" font-family="'Inter'" font-size="12" font-weight="bold" fill="#324e58" text-anchor="middle">№11</text>
+                            </g>
+                            <g id="map-cabin-12" onclick="onMapCottageClick(12)" class="cursor-pointer group">
+                                <rect x="320" y="190" width="55" height="40" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
+                                <polygon points="320,190 347.5,172 375,190" fill="#464b49"/>
+                                <text x="347.5" y="215" font-family="'Inter'" font-size="12" font-weight="bold" fill="#324e58" text-anchor="middle">№12</text>
+                            </g>
+                            <g id="map-cabin-13" onclick="onMapCottageClick(13)" class="cursor-pointer group">
+                                <rect x="410" y="190" width="55" height="40" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
+                                <polygon points="410,190 437.5,172 465,190" fill="#464b49"/>
+                                <text x="437.5" y="215" font-family="'Inter'" font-size="12" font-weight="bold" fill="#324e58" text-anchor="middle">№13</text>
+                            </g>
+                            <g id="map-cabin-14" onclick="onMapCottageClick(14)" class="cursor-pointer group">
+                                <rect x="500" y="190" width="55" height="40" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
+                                <polygon points="500,190 527.5,172 555,190" fill="#464b49"/>
+                                <text x="527.5" y="215" font-family="'Inter'" font-size="12" font-weight="bold" fill="#324e58" text-anchor="middle">№14</text>
+                            </g>
+                            <g id="map-cabin-15" onclick="onMapCottageClick(15)" class="cursor-pointer group">
+                                <rect x="590" y="190" width="55" height="40" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
+                                <polygon points="590,190 617.5,172 645,190" fill="#464b49"/>
+                                <text x="617.5" y="215" font-family="'Inter'" font-size="12" font-weight="bold" fill="#324e58" text-anchor="middle">№15</text>
+                            </g>
+                            <g id="map-cabin-16" onclick="onMapCottageClick(16)" class="cursor-pointer group">
+                                <rect x="680" y="190" width="55" height="40" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
+                                <polygon points="680,190 707.5,172 735,190" fill="#464b49"/>
+                                <text x="707.5" y="215" font-family="'Inter'" font-size="12" font-weight="bold" fill="#324e58" text-anchor="middle">№16</text>
+                            </g>
+
+                            <!-- Row 3: Y=300 -->
+                            <g id="map-cabin-17" onclick="onMapCottageClick(17)" class="cursor-pointer group">
+                                <rect x="50" y="300" width="55" height="40" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
+                                <polygon points="50,300 77.5,282 105,300" fill="#464b49"/>
+                                <text x="77.5" y="325" font-family="'Inter'" font-size="12" font-weight="bold" fill="#324e58" text-anchor="middle">№17</text>
+                            </g>
+                            <g id="map-cabin-18" onclick="onMapCottageClick(18)" class="cursor-pointer group">
+                                <rect x="140" y="300" width="55" height="40" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
+                                <polygon points="140,300 167.5,282 195,300" fill="#464b49"/>
+                                <text x="167.5" y="325" font-family="'Inter'" font-size="12" font-weight="bold" fill="#324e58" text-anchor="middle">№18</text>
+                            </g>
+                            <g id="map-cabin-19" onclick="onMapCottageClick(19)" class="cursor-pointer group">
+                                <rect x="230" y="300" width="55" height="40" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
+                                <polygon points="230,300 257.5,282 285,300" fill="#464b49"/>
+                                <text x="257.5" y="325" font-family="'Inter'" font-size="12" font-weight="bold" fill="#324e58" text-anchor="middle">№19</text>
+                            </g>
+                            <g id="map-cabin-20" onclick="onMapCottageClick(20)" class="cursor-pointer group">
+                                <rect x="320" y="300" width="55" height="40" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
+                                <polygon points="320,300 347.5,282 375,300" fill="#464b49"/>
+                                <text x="347.5" y="325" font-family="'Inter'" font-size="12" font-weight="bold" fill="#324e58" text-anchor="middle">№20</text>
+                            </g>
+                            <g id="map-cabin-21" onclick="onMapCottageClick(21)" class="cursor-pointer group">
+                                <rect x="410" y="300" width="55" height="40" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
+                                <polygon points="410,300 437.5,282 465,300" fill="#464b49"/>
+                                <text x="437.5" y="325" font-family="'Inter'" font-size="12" font-weight="bold" fill="#324e58" text-anchor="middle">№21</text>
+                            </g>
+                            <g id="map-cabin-22" onclick="onMapCottageClick(22)" class="cursor-pointer group">
+                                <rect x="500" y="300" width="55" height="40" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
+                                <polygon points="500,300 527.5,282 555,300" fill="#464b49"/>
+                                <text x="527.5" y="325" font-family="'Inter'" font-size="12" font-weight="bold" fill="#324e58" text-anchor="middle">№22</text>
+                            </g>
+                            <g id="map-cabin-23" onclick="onMapCottageClick(23)" class="cursor-pointer group">
+                                <rect x="590" y="300" width="55" height="40" fill="#ffffff" rx="6" stroke="#c2c7ca" stroke-width="2"/>
+                                <polygon points="590,300 617.5,282 645,300" fill="#464b49"/>
+                                <text x="617.5" y="325" font-family="'Inter'" font-size="12" font-weight="bold" fill="#324e58" text-anchor="middle">№23</text>
                             </g>
                         </svg>
 
